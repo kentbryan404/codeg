@@ -456,6 +456,15 @@ export function UpdateProvider({ children }: { children: React.ReactNode }) {
 
   const checkNow = useCallback(
     (opts?: { silent?: boolean }) => {
+      // A dev/source build (`next dev`, i.e. `pnpm tauri dev` or `start.sh`) has
+      // no installed release to update to: the configured manifest points at the
+      // RELEASED channel, so every automatic check is at best a 404 and at worst
+      // a network error (offline/proxy) — surfacing as a red console error in the
+      // dev overlay. Skip only the automatic (silent) path; a user-initiated
+      // check from Settings still runs and still reports its result.
+      if (process.env.NODE_ENV === "development" && (opts?.silent ?? true)) {
+        return Promise.resolve()
+      }
       const existing = inFlightCheckRef.current
       if (existing) return existing
       const p = runCheck(opts?.silent ?? true).finally(() => {
