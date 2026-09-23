@@ -1,0 +1,50 @@
+name: Sync fork from upstream
+
+# Keep this fork's `main` in step with xintaofei/codeg once a day.
+#
+# Merge, not a hard reset: this workflow file lives on `main` and is not in
+# upstream, so resetting `main` to `upstream/main` would delete the file on the
+# first run and silently stop the schedule. A merge preserves it while still
+# fast-forwarding whenever upstream has moved and this fork has not diverged.
+#
+# Runs on the ephemeral `GITHUB_TOKEN` (contents: write); no long-lived PAT is
+# stored anywhere. Upstream is a public repository, so the fetch needs no auth.
+on:
+  schedule:
+    # 03:17 UTC daily — off the top of the hour to dodge scheduler load.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-fork-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge upstream/main into main
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add upstream https://github.com/xintaofei/codeg.git
+          git fetch upstream main
+
+          if git merge-base --is-ancestor upstream/main HEAD; then
+            echo "main is already up to date with upstream."
+            exit 0
+          fi
+
+          git merge --no-edit upstream/main
+          git push origin HEAD:main
