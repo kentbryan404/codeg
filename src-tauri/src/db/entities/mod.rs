@@ -2,7 +2,6 @@ pub mod agent_setting;
 pub mod app_metadata;
 pub mod automation;
 pub mod automation_run;
-pub mod canvas_node;
 pub mod chat_channel;
 pub mod chat_channel_message_log;
 pub mod chat_channel_sender_context;

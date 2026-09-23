@@ -11,10 +11,9 @@ export interface PendingDeepLink {
 /**
  * Drain the deep link the desktop app was opened with.
  *
- * `workspace://focus-conversation` reaches only webviews that have already
- * subscribed, so a cold-start `codeg://session/<id>` — resolved in Rust while
+ * A cold-start `codeg://session/<id>` — resolved in Rust while
  * the window is still loading — would otherwise be dropped. The backend parks
- * the resolved target; this takes it (once) when `PetFocusBridge` is ready.
+ * the resolved target; this takes it (once) when `FocusBridge` is ready.
  *
  * Desktop-only, and never on a remote-workspace window: that window's
  * transport targets a `codeg-server`, which has no such command (nor a local

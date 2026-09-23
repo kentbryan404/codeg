@@ -283,39 +283,6 @@ pub fn build_router(
             "/remove_folder_link",
             post(handlers::folder_links::remove_folder_link),
         )
-        // ─── Canvas ───
-        .route(
-            "/canvas_list_nodes",
-            post(handlers::canvas::canvas_list_nodes),
-        )
-        .route(
-            "/canvas_create_node",
-            post(handlers::canvas::canvas_create_node),
-        )
-        .route(
-            "/canvas_group_into_region",
-            post(handlers::canvas::canvas_group_into_region),
-        )
-        .route(
-            "/canvas_update_node",
-            post(handlers::canvas::canvas_update_node),
-        )
-        .route(
-            "/canvas_move_nodes",
-            post(handlers::canvas::canvas_move_nodes),
-        )
-        .route(
-            "/canvas_detach_member",
-            post(handlers::canvas::canvas_detach_member),
-        )
-        .route(
-            "/canvas_delete_node",
-            post(handlers::canvas::canvas_delete_node),
-        )
-        .route(
-            "/canvas_delete_nodes",
-            post(handlers::canvas::canvas_delete_nodes),
-        )
         .route(
             "/add_folder_to_history",
             post(handlers::folders::add_folder_to_history),
@@ -1665,87 +1632,6 @@ pub fn build_router(
         .route(
             "/work_task_template_delete",
             post(handlers::work_task::work_task_template_delete),
-        )
-        // ─── Workspace background ───
-        .route(
-            "/background_read",
-            post(handlers::background::background_read),
-        )
-        .route(
-            "/background_set",
-            // A 16MiB image becomes ~21.4MiB once base64-encoded and wrapped in
-            // the JSON envelope; axum's default 2MiB `DefaultBodyLimit` would
-            // 413 any real photo before the handler runs. Raise it to cover the
-            // advertised ceiling; `backgrounds::validate_background` stays the
-            // authoritative size boundary on the decoded bytes.
-            post(handlers::background::background_set)
-                .layer(DefaultBodyLimit::max(24 * 1024 * 1024)),
-        )
-        .route(
-            "/background_clear",
-            post(handlers::background::background_clear),
-        )
-        .route(
-            "/background_market_search",
-            post(handlers::background::background_market_search),
-        )
-        .route(
-            "/background_market_asset",
-            post(handlers::background::background_market_asset),
-        )
-        .route(
-            "/background_market_download",
-            post(handlers::background::background_market_download),
-        )
-        // ─── Pet ───
-        .route("/pet_list", post(handlers::pet::pet_list))
-        .route("/pet_get", post(handlers::pet::pet_get))
-        .route(
-            "/pet_read_spritesheet",
-            post(handlers::pet::pet_read_spritesheet),
-        )
-        .route("/pet_add", post(handlers::pet::pet_add))
-        .route("/pet_update_meta", post(handlers::pet::pet_update_meta))
-        .route(
-            "/pet_replace_sprite",
-            post(handlers::pet::pet_replace_sprite),
-        )
-        .route("/pet_delete", post(handlers::pet::pet_delete))
-        .route(
-            "/pet_list_importable_codex",
-            post(handlers::pet::pet_list_importable_codex),
-        )
-        .route("/pet_import_codex", post(handlers::pet::pet_import_codex))
-        .route(
-            "/pet_codex_import_available",
-            post(handlers::pet::pet_codex_import_available),
-        )
-        .route("/pet_get_settings", post(handlers::pet::pet_get_settings))
-        .route("/pet_set_active", post(handlers::pet::pet_set_active))
-        .route(
-            "/pet_save_window_state",
-            post(handlers::pet::pet_save_window_state),
-        )
-        .route(
-            "/pet_marketplace_list",
-            post(handlers::pet::pet_marketplace_list),
-        )
-        .route(
-            "/pet_marketplace_install",
-            post(handlers::pet::pet_marketplace_install),
-        )
-        .route(
-            "/pet_marketplace_asset",
-            post(handlers::pet::pet_marketplace_asset),
-        )
-        .route("/pet_celebrate", post(handlers::pet::pet_celebrate))
-        .route(
-            "/pet_get_current_state",
-            post(handlers::pet::pet_get_current_state),
-        )
-        .route(
-            "/pet_list_active_sessions",
-            post(handlers::pet::pet_list_active_sessions),
         )
         // ─── Terminal ───
         .route("/terminal_spawn", post(handlers::terminal::terminal_spawn))

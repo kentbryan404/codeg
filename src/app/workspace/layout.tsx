@@ -61,8 +61,7 @@ import {
 } from "@/contexts/workspace-context"
 import { RemoteConnectionGate } from "@/contexts/remote-connection-context"
 import { UpdateProvider } from "@/components/providers/update-provider"
-import { useWorkspaceBackground, useZoomLevel } from "@/hooks/use-appearance"
-import { FILL_MODE_STYLE } from "@/lib/workspace-background"
+import { useZoomLevel } from "@/hooks/use-appearance"
 import { TabBar } from "@/components/tabs/tab-bar"
 import { TerminalPanel } from "@/components/terminal/terminal-panel"
 import { AuxPanel } from "@/components/layout/aux-panel"
@@ -77,7 +76,7 @@ import { ExternalConflictDialog } from "@/components/files/external-conflict-dia
 import { AppToaster } from "@/components/ui/app-toaster"
 import {
   DeepLinkBootstrap,
-  PetFocusBridge,
+  FocusBridge,
 } from "@/components/workspace/deep-link-bootstrap"
 import { WorkspaceOpenFolderListener } from "@/components/workspace/workspace-open-folder-listener"
 import { HeavyPluginsWarmup } from "@/components/ai-elements/heavy-plugins-warmup"
@@ -1169,47 +1168,8 @@ function FolderLayoutShell({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile()
   const { isWindows, isLinux } = usePlatform()
   const winLinuxControls = isDesktop() && (isWindows || isLinux)
-  const {
-    workspaceBgEnabled,
-    workspaceBgImageUrl,
-    workspaceBgMaskOpacity,
-    workspaceBgImageBlur,
-    workspaceBgFillMode,
-  } = useWorkspaceBackground()
-  const showBackground = workspaceBgEnabled && workspaceBgImageUrl !== null
-  const fillStyle = FILL_MODE_STYLE[workspaceBgFillMode]
-
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-foreground pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]">
-      {/* 用户背景图片：铺在整个工作区底层。根 div 是 fixed，已建立层叠上下文，故
-          -z-10 绘于自身 bg-background 之上、所有流内容之下。遮罩是朝 --background 的
-          面纱（明暗自适配），保证内容可读；结构性面板的半透明由 globals.css 的
-          [data-workspace-bg] 规则处理，不在此。 */}
-      {showBackground && (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 bg-center"
-            style={{
-              backgroundImage: `url("${workspaceBgImageUrl}")`,
-              backgroundSize: fillStyle.size,
-              backgroundRepeat: fillStyle.repeat,
-              filter: workspaceBgImageBlur
-                ? `blur(${workspaceBgImageBlur}px)`
-                : undefined,
-            }}
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10"
-            style={{
-              backgroundColor: `color-mix(in oklch, var(--background) ${Math.round(
-                workspaceBgMaskOpacity * 100
-              )}%, transparent)`,
-            }}
-          />
-        </>
-      )}
       {/* Global shortcuts + the search / remote-directory dialogs (formerly
           owned by the full-width FolderTitleBar). Mounted on both platforms. */}
       <WorkspaceChromeController />
@@ -1310,7 +1270,7 @@ function WorkspaceLayoutInner({ children }: { children: React.ReactNode }) {
                       <BrowserTabsSuspender />
                       <HeavyPluginsWarmup />
                       <DeepLinkBootstrap />
-                      <PetFocusBridge />
+                      <FocusBridge />
                       {/* Always mounted: external-change conflicts must be
                             resolvable even with the aux file tree closed. */}
                       <ExternalConflictDialog />

@@ -35,30 +35,6 @@ export const STORAGE_KEY_TERMINAL_FONT_CUSTOM = "codeg-terminal-font-custom"
 export const STORAGE_KEY_TERMINAL_FONT_SIZE = "codeg-terminal-font-size"
 export const STORAGE_KEY_TERMINAL_LIGATURES = "codeg-terminal-ligatures"
 
-// Workspace 背景图片。图片本身存磁盘（~/.codeg/backgrounds/），localStorage 只存
-// 展示配置。仅 enabled 与 panel-opacity 需要预水合（它们作用于首帧就存在的结构性
-// 表面）；mask/blur/fill 水合后才有意义（图片异步到达），不进 inline 脚本。
-export const STORAGE_KEY_WORKSPACE_BG_ENABLED = "codeg-workspace-bg-enabled"
-export const STORAGE_KEY_WORKSPACE_BG_MASK = "codeg-workspace-bg-mask"
-export const STORAGE_KEY_WORKSPACE_BG_BLUR = "codeg-workspace-bg-blur"
-export const STORAGE_KEY_WORKSPACE_BG_FILL = "codeg-workspace-bg-fill"
-export const STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY =
-  "codeg-workspace-bg-panel-opacity"
-// 图片存磁盘、写盘无跨窗口信号（外观设置是独立窗口）。用这个版本戳广播失效：
-// 写/换/删图后 bump，让 workspace 窗口经 storage 事件重新读盘。不需预水合。
-export const STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION =
-  "codeg-workspace-bg-image-version"
-// 壁纸市场：当前背景的来源页（https://wallhaven.cc/w/<id>），仅用于市场卡片的
-// 「使用中」标记。本地选图 / 移除背景时清除；不参与渲染，丢了也只是标记失灵。
-//
-// 它和图片本身是两份状态，只在同一次操作里前后脚写，并非事务。同一个界面里
-// 换图是单飞的（市场对话框全网格禁用，本地选图有 busy 闸），但两个窗口/标签页
-// 同时换图时，最后落盘的图和最后写的标记可能来自不同的那一次 —— 图仍然是完整
-// 的一张（后端按写者独立暂存 + 原子 rename），错的只是「使用中」指向谁。要根治
-// 得把来源页跟图一起存到磁盘上，那是后端的形状改动，不在本次范围内。
-export const STORAGE_KEY_WORKSPACE_BG_SOURCE_URL =
-  "codeg-workspace-bg-source-url"
-
 // 自定义样式（外观设置页）。全部需要预水合 —— 少一帧就会看到「基底预设 → 用户配色」
 // 的跳变，比没有这个功能更糟。
 //
@@ -112,18 +88,6 @@ const SCRIPT = `
     var uiFontStack = localStorage.getItem("${STORAGE_KEY_UI_FONT_STACK}");
     if (uiFontId && uiFontStack && uiFontStack.length < 512 && !/[;{}<>]/.test(uiFontStack)) {
       document.documentElement.style.setProperty("--font-sans", uiFontStack);
-    }
-
-    // Workspace 背景：预水合仅处理首帧就存在的结构性表面。启用时给 <html> 打
-    // data-workspace-bg 属性并预置 --ws-surface-alpha，避免面板 opaque→translucent
-    // 跳变。图片本身异步从磁盘读，不在此处理。
-    var wsbgEnabled = localStorage.getItem("${STORAGE_KEY_WORKSPACE_BG_ENABLED}");
-    if (wsbgEnabled === "1") {
-      document.documentElement.setAttribute("data-workspace-bg", "on");
-      var wsbgAlpha = parseFloat(localStorage.getItem("${STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY}") || "");
-      if (!isNaN(wsbgAlpha) && wsbgAlpha >= 0.3 && wsbgAlpha <= 1) {
-        document.documentElement.style.setProperty("--ws-surface-alpha", String(wsbgAlpha));
-      }
     }
 
     // 在 next-themes 水合之前同步检测暗色模式，防止白色闪屏。

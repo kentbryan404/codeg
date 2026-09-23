@@ -73,12 +73,20 @@ function main() {
   }
 
   const { target: cliTarget } = parseArgs(process.argv.slice(2))
-  const target =
-    cliTarget || process.env.TAURI_TARGET_TRIPLE || resolveHostTriple()
+  const hostTriple = resolveHostTriple()
+  const target = cliTarget || process.env.TAURI_TARGET_TRIPLE || hostTriple
   const isWindows = target.includes("windows")
   const ext = isWindows ? ".exe" : ""
+  // A host build (no cross --target) must NOT pass `--target`: that would place
+  // the sidecar in `target/<triple>/release`, a SEPARATE cargo target dir from
+  // the `target/release` that `tauri build` / `tauri dev` use for the host, so
+  // every shared dependency gets compiled twice (and ~1GB of disk duplicated).
+  // Only a real cross-compile names a triple.
+  const crossCompile = target !== hostTriple
 
-  log(`target triple: ${target}`)
+  log(
+    `target triple: ${target}${crossCompile ? "" : " (host — sharing target/release)"}`
+  )
   log(`building ${BIN_NAME} (--release --no-default-features)`)
 
   // cargo build needs to run from src-tauri so it resolves the local manifest
@@ -86,24 +94,21 @@ function main() {
   // `--no-default-features` keeps codeg-mcp free of the Tauri runtime deps —
   // the bin's required-features is empty, so this just enables cross-compile
   // without dragging in macOS-private-api / Linux WebKit / Windows WebView2.
-  execFileSync(
-    "cargo",
-    [
-      "build",
-      "--release",
-      "--bin",
-      BIN_NAME,
-      "--no-default-features",
-      "--target",
-      target,
-    ],
-    { stdio: "inherit", cwd: SRC_TAURI }
-  )
+  const cargoArgs = [
+    "build",
+    "--release",
+    "--bin",
+    BIN_NAME,
+    "--no-default-features",
+  ]
+  if (crossCompile) cargoArgs.push("--target", target)
+
+  execFileSync("cargo", cargoArgs, { stdio: "inherit", cwd: SRC_TAURI })
 
   const built = join(
     SRC_TAURI,
     "target",
-    target,
+    ...(crossCompile ? [target] : []),
     "release",
     `${BIN_NAME}${ext}`
   )

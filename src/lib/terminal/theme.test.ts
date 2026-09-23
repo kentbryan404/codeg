@@ -77,7 +77,6 @@ function mountContainer(panelBackground: string): HTMLElement {
 
 beforeEach(() => {
   document.documentElement.classList.remove("dark")
-  document.documentElement.removeAttribute("data-workspace-bg")
   document.body.innerHTML = ""
 })
 
@@ -147,22 +146,5 @@ describe("getTerminalTheme", () => {
     const orphan = document.createElement("div")
     expect(getTerminalTheme(orphan).background).toBe("#ffffff")
     expect(getTerminalTheme(null).background).toBe("#ffffff")
-  })
-
-  it("开启背景图时保持 alpha 0 的透明底色（xterm 正则认得的逗号式 rgba）", async () => {
-    stubCanvas(fakeContext({}))
-    document.documentElement.setAttribute("data-workspace-bg", "on")
-    const getTerminalTheme = await loadGetTerminalTheme()
-
-    const light = getTerminalTheme(mountContainer("oklch(1 0 0)"))
-    expect(light.background).toBe("rgba(255, 255, 255, 0)")
-    expect(light.background).toMatch(XTERM_PARSEABLE)
-    // 透明画布下 cursorAccent 必须留在不透明主题色上，否则块状光标里的字符会一起消失。
-    expect(light.cursorAccent).toBe("#ffffff")
-
-    document.documentElement.classList.add("dark")
-    const dark = getTerminalTheme(mountContainer("oklch(0.145 0 0)"))
-    expect(dark.background).toBe("rgba(26, 26, 26, 0)")
-    expect(dark.cursorAccent).toBe("#1a1a1a")
   })
 })

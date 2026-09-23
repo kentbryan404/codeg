@@ -33,7 +33,6 @@ function sourceFiles(dir: string): string[] {
  */
 const SURFACES = [
   "src/components/conversations/conversation-detail-panel.tsx",
-  "src/components/canvas/canvas-conversation-surface.tsx",
   "src/components/message/live-transcript-view.tsx",
 ]
 

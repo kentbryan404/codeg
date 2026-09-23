@@ -1,8 +1,6 @@
 pub mod acp;
 pub mod app_update;
 pub mod automation;
-pub mod canvas;
-pub mod background;
 pub mod backup;
 pub mod browser_bridge;
 pub mod browser_tools;
@@ -28,7 +26,6 @@ pub mod mcp_service;
 pub mod model_provider;
 pub mod office_tools;
 pub mod office_watch_proxy;
-pub mod pet;
 pub mod project_boot;
 pub mod question;
 pub mod quick_messages;

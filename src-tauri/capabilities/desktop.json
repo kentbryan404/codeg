@@ -12,8 +12,6 @@
     "remote-project-boot-*",
     "import-sessions",
     "remote-import-sessions-*",
-    "pet",
-    "pet-panel",
     "remote-workspace-*",
     "remote-settings-*",
     "remote-commit-*",

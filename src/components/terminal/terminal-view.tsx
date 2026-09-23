@@ -351,15 +351,14 @@ export function TerminalView({
         return true
       })
 
-      // Watch <html> for theme (class) and workspace-background (data-workspace-bg)
-      // switching — both change what getTerminalTheme returns (dark/light palette,
-      // and transparent-vs-opaque background), so re-push the theme on either.
+      // Watch <html> for theme (class) switching — it changes what
+      // getTerminalTheme returns (dark/light palette), so re-push the theme.
       const themeObserver = new MutationObserver(() => {
         term.options.theme = getTerminalTheme(containerRef.current)
       })
       themeObserver.observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ["class", "data-workspace-bg"],
+        attributeFilter: ["class"],
       })
 
       // Send input to PTY

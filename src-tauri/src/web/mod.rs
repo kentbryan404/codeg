@@ -853,12 +853,6 @@ pub(crate) async fn do_start_web_server_tauri(
             .unwrap_or_else(|| {
                 Arc::new(crate::workspace_transfer::WorkspaceTransferManager::new_from_env())
             }),
-        // Reuse the same handle the Tauri-mode subscriber writes to so HTTP
-        // and webview readers see the identical snapshot.
-        pet_state: app
-            .state::<crate::pet_state_mapper::PetStateHandle>()
-            .inner()
-            .clone(),
         // Reuse the live broker / token registry / socket path from the
         // Tauri-managed state so HTTP-side delegation commands target the
         // same listener the desktop process is already running.

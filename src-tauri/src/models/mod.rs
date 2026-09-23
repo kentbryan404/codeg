@@ -1,13 +1,10 @@
 pub mod agent;
 pub mod automation;
-pub mod background;
-pub mod canvas;
 pub mod chat_channel;
 pub mod conversation;
 pub mod folder;
 pub mod message;
 pub mod model_provider;
-pub mod pet;
 pub mod quick_message;
 pub mod remote_workspace_connection;
 pub mod system;
@@ -19,7 +16,6 @@ pub use automation::{
     AutomationAction, AutomationConfig, AutomationDraft, AutomationInfo, AutomationRunInfo,
     AutomationRunStatus, IsolationMode, TriggerKind,
 };
-pub use canvas::{CanvasMutation, CanvasNode, CanvasSnapshot};
 #[allow(unused_imports)]
 pub use chat_channel::{ChannelStatusInfo, ChatChannelInfo, ChatChannelMessageLogInfo};
 pub use conversation::{

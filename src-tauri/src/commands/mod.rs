@@ -2,14 +2,12 @@ pub mod acp;
 #[cfg(feature = "tauri-runtime")]
 pub mod app_update;
 pub mod automation;
-pub mod background;
 pub mod backup;
 #[cfg(feature = "tauri-runtime")]
 pub mod browser;
 /// The browser tool group's on/off switch. Unlike `browser` itself this is not
 /// desktop-only: the shared codeg-mcp plumbing reads it in both runtimes.
 pub mod browser_tools;
-pub mod canvas;
 pub mod chat_authoring;
 pub mod chat_channel;
 /// Files-onto-the-OS-clipboard. Only the command itself is desktop-gated; the
@@ -38,7 +36,6 @@ pub mod office_tools;
 pub mod open_in;
 #[cfg(feature = "tauri-runtime")]
 pub mod notification;
-pub mod pet;
 pub mod project_boot;
 pub mod question;
 pub mod quick_messages;

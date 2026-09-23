@@ -25,7 +25,6 @@ function resetDocument() {
   const root = document.documentElement
   root.removeAttribute("style")
   root.removeAttribute("data-theme")
-  root.removeAttribute("data-workspace-bg")
   root.classList.remove("dark")
   document.getElementById(CUSTOM_CSS_ELEMENT_ID)?.remove()
 }

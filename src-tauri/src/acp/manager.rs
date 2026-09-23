@@ -2851,58 +2851,6 @@ impl ConnectionManager {
         connections.values().map(|c| c.info()).collect()
     }
 
-    /// Raw per-connection rows for the pet panel's active-session list.
-    /// "Active" = the connection is currently `Prompting`, awaiting a
-    /// permission, or in an `Error` state — the sessions a user would want to
-    /// see or act on from the floating pet. Idle `Connected` sessions are
-    /// excluded to keep the list focused (mirrors the Codex pet "signal"
-    /// model).
-    ///
-    /// `title` is left empty here: this layer has no DB handle. The command
-    /// layer (`pet_list_active_sessions_core`) fills it from the conversation
-    /// row. Connections without both a bound `conversation_id` and `folder_id`
-    /// are skipped — the panel needs both to render a row and to navigate to
-    /// it. Lock discipline mirrors `find_connection_by_conversation_id`: hold
-    /// the connections mutex while taking each per-session read lock (the
-    /// reads are microseconds and released each iteration).
-    pub async fn list_active_sessions(&self) -> Vec<crate::models::pet::PetSessionEntry> {
-        let connections = self.connections.lock().await;
-        let mut out = Vec::new();
-        for (id, conn) in connections.iter() {
-            let state = conn.state.read().await;
-            let (Some(conversation_id), Some(folder_id)) =
-                (state.conversation_id, state.folder_id)
-            else {
-                continue;
-            };
-            let pending = state
-                .pending_permission
-                .as_ref()
-                .map(crate::models::pet::PetPermissionSummary::from);
-            let is_active = pending.is_some()
-                || matches!(
-                    state.status,
-                    ConnectionStatus::Prompting | ConnectionStatus::Error
-                );
-            if !is_active {
-                continue;
-            }
-            out.push(crate::models::pet::PetSessionEntry {
-                connection_id: id.clone(),
-                conversation_id,
-                folder_id,
-                agent_type: state.agent_type,
-                title: String::new(),
-                status: state.status.clone(),
-                pending,
-                // Same reason as `title`: resolving a delegation child's parent
-                // needs the DB. Filled by `pet_list_active_sessions_core`.
-                parent: None,
-            });
-        }
-        out
-    }
-
     /// Clone the `Arc<RwLock<SessionState>>` for a given connection id so the
     /// caller can read/write state without holding the connections mutex.
     /// Returns `None` if no such connection is registered.

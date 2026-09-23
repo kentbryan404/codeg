@@ -42,6 +42,12 @@ mod m20260818_000001_work_task_source;
 mod m20260819_000001_work_task_completion_kind;
 mod m20260825_000001_remote_workspace_connection_headers;
 mod m20260829_000001_folder_group;
+// The conversation-canvas feature was removed, but its migrations stay: SeaORM
+// refuses to start when an already-applied migration's file is gone
+// (`Migration file ... is missing`). Keeping them preserves the applied history
+// of existing databases; the `canvas_node` table is left in place, inert, since
+// no entity or service reads it. Deleting these files would panic every install
+// that had run the canvas build.
 mod m20260830_000001_canvas_node;
 mod m20260831_000001_canvas_node_group_grid;
 mod m20260907_000001_canvas_node_path;

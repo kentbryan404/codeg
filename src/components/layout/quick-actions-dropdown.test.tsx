@@ -14,7 +14,6 @@ const mocks = vi.hoisted(() => {
   return {
     connections,
     openProjectBootWindow: vi.fn(() => Promise.resolve()),
-    openPetWindow: vi.fn(() => Promise.resolve()),
     openRemoteWorkspace: vi.fn(() => Promise.resolve()),
     listRemoteWorkspaceConnections: vi.fn(() => Promise.resolve(connections)),
     setRoute: vi.fn(),
@@ -33,8 +32,6 @@ vi.mock("@/lib/platform", () => ({ isDesktop: () => desktop }))
 vi.mock("@/lib/api", () => ({
   openProjectBootWindow: mocks.openProjectBootWindow,
 }))
-
-vi.mock("@/lib/pet/api", () => ({ openPetWindow: mocks.openPetWindow }))
 
 vi.mock("@/lib/remote-workspace", () => ({
   listRemoteWorkspaceConnections: mocks.listRemoteWorkspaceConnections,
@@ -132,7 +129,6 @@ describe("QuickActionsDropdown", () => {
       "To-dos",
       FORGE_ROW,
       "Open browser tab",
-      "Show pet",
     ]) {
       expect(await screen.findByRole("menuitem", { name: label })).toBeVisible()
     }
@@ -159,7 +155,7 @@ describe("QuickActionsDropdown", () => {
     // The rest of the group survives, so this is the gate and not the group
     // failing to render.
     expect(
-      await screen.findByRole("menuitem", { name: "Show pet" })
+      await screen.findByRole("menuitem", { name: "Project Boot" })
     ).toBeVisible()
   })
 
@@ -201,7 +197,6 @@ describe("QuickActionsDropdown", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Open remote workspace" })
     ).toBeNull()
-    expect(screen.queryByRole("menuitem", { name: "Show pet" })).toBeNull()
     expect(screen.queryByText("More")).toBeNull()
   })
 
@@ -222,10 +217,6 @@ describe("QuickActionsDropdown", () => {
     await reopen()
     await clickItem(FORGE_ROW)
     expect(mocks.setRoute).toHaveBeenCalledWith("forge")
-
-    await reopen()
-    await clickItem("Show pet")
-    expect(mocks.openPetWindow).toHaveBeenCalled()
   })
 
   it("loads the remote connections only when its submenu opens", async () => {

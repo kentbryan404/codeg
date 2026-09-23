@@ -60,9 +60,7 @@ pub const FORBIDDEN_PREFERENCE_KEYS: &[&str] = &[
     "github_accounts",
     "chat_event_webhooks",
     "git_settings",
-    "pet.config",
     "forge_workbench_settings",
-    "canvas_revision",
     "opened_tabs_version",
     "token_usage_fact_schema_version",
 ];

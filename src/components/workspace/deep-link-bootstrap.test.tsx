@@ -14,7 +14,7 @@ vi.mock("@/contexts/tab-context", () => ({
   useTabStore: (selector: (s: typeof tabs) => unknown) => selector(tabs),
   useTabActions: () => tabs,
 }))
-// PetFocusBridge shares this module; keep its backend call off the wire.
+// FocusBridge shares this module; keep its backend call off the wire.
 vi.mock("@/lib/transport", () => ({
   getTransport: () => ({ subscribe: async () => () => {} }),
 }))

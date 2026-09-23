@@ -14,7 +14,7 @@ import type { AgentType } from "@/lib/types"
  * On Windows and Linux this is also where a cold-start `codeg://session/<id>`
  * arrives: the URL comes in on argv, so the backend can resolve it and point
  * the window straight at this query string before the webview exists. (macOS
- * learns about the link too late for that and uses {@link PetFocusBridge}'s
+ * learns about the link too late for that and uses {@link FocusBridge}'s
  * parked-target drain instead.)
  */
 export function DeepLinkBootstrap() {
@@ -114,12 +114,11 @@ type FocusRequest = {
 }
 
 /**
- * Live counterpart to {@link DeepLinkBootstrap}: listens for the pet panel's
- * `workspace://focus-conversation` request (emitted by the `focus_conversation`
- * command after bringing the main window forward) and opens the conversation
- * via `openTab` — no URL reload, so in-memory tab/session state survives.
+ * Live counterpart to {@link DeepLinkBootstrap}: where an OS
+ * `codeg://session/<id>` deep link lands, opening the conversation via
+ * `openTab` — no URL reload, so in-memory tab/session state survives.
  *
- * Also where an OS `codeg://session/<id>` deep link lands. That one does NOT
+ * Such a link does NOT
  * travel in an event payload: Tauri delivers an event only to webviews that
  * already registered a listener, so the emit for a cold-start link is dropped
  * on the floor. The backend parks the resolved target and sends a payload-less
@@ -132,7 +131,7 @@ type FocusRequest = {
  * sees fresh state without re-subscribing on every change. A request that
  * arrives before folders/tabs hydrate is queued and replayed.
  */
-export function PetFocusBridge() {
+export function FocusBridge() {
   const foldersHydrated = useAppWorkspaceStore((s) => s.foldersHydrated)
   const tabsHydrated = useTabStore((s) => s.tabsHydrated)
   const { openTab } = useTabActions()
@@ -144,11 +143,9 @@ export function PetFocusBridge() {
     stateRef.current = { tabsHydrated, openTab }
   }, [tabsHydrated, openTab])
 
-  // Focus requests waiting for the workspace to hydrate. Both producers are
-  // one-shot — a pet-panel click is an event with no replay, and a drained
-  // deep link has already been taken out of the backend slot — so a single
-  // slot here would let whichever arrives second erase the first with no way
-  // to get it back. Queue them; the last one still ends up focused.
+  // Focus requests waiting for the workspace to hydrate. A drained deep link
+  // is one-shot — it has already been taken out of the backend slot — so it is
+  // queued rather than replacing an in-flight request.
   const pendingRef = useRef<FocusRequest[]>([])
 
   // Tail of the batches already running. Opening a tab can await a folder
@@ -179,7 +176,7 @@ export function PetFocusBridge() {
             try {
               await workspace.addFolderToWorkspaceById(req.folderId)
             } catch (err) {
-              console.error("[PetFocusBridge] open folder failed:", err)
+              console.error("[FocusBridge] open folder failed:", err)
               continue
             }
           }
@@ -197,7 +194,7 @@ export function PetFocusBridge() {
       })
       // Never leave the chain rejected: every later batch hangs off it.
       .catch((err) => {
-        console.error("[PetFocusBridge] focus batch failed:", err)
+        console.error("[FocusBridge] focus batch failed:", err)
       })
   }, [])
 
@@ -225,27 +222,6 @@ export function PetFocusBridge() {
         const { getTransport } = await import("@/lib/transport")
         const transport = getTransport()
 
-        const offFocus = await transport.subscribe<{
-          folderId?: number
-          conversationId?: number
-          agent?: string
-        }>("workspace://focus-conversation", (payload) => {
-          const folderId = Number(payload?.folderId)
-          const conversationId = Number(payload?.conversationId)
-          const agent = payload?.agent as AgentType | undefined
-          if (
-            !Number.isFinite(folderId) ||
-            !Number.isFinite(conversationId) ||
-            !agent
-          ) {
-            return
-          }
-          pendingRef.current.push({ folderId, conversationId, agent })
-          attempt()
-        })
-        if (cancelled) offFocus()
-        else disposers.push(offFocus)
-
         const offPending = await transport.subscribe(
           "workspace://deep-link-pending",
           () => {
@@ -255,7 +231,7 @@ export function PetFocusBridge() {
         if (cancelled) offPending()
         else disposers.push(offPending)
       } catch (err) {
-        console.warn("[PetFocusBridge] subscription failed:", err)
+        console.warn("[FocusBridge] subscription failed:", err)
       }
 
       // Last, so a link resolved while the subscriptions were still being set

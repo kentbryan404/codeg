@@ -8,13 +8,11 @@
 use std::path::{Path, PathBuf};
 
 const CODEG_DIR_NAME: &str = ".codeg";
-const PETS_DIR_NAME: &str = "pets";
 const BROWSER_PROFILES_DIR_NAME: &str = "browser-profiles";
 const UPLOADS_DIR_NAME: &str = "uploads";
 const LOGS_DIR_NAME: &str = "logs";
 const TURN_TIMINGS_DIR_NAME: &str = "turn-timings";
 const ACP_TRANSCRIPTS_DIR_NAME: &str = "acp-transcripts";
-const BACKGROUNDS_DIR_NAME: &str = "backgrounds";
 
 /// `$CODEG_HOME` if set (and non-empty), else `~/.codeg/`.
 ///
@@ -29,30 +27,11 @@ pub fn codeg_home_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(CODEG_DIR_NAME))
 }
 
-/// Root directory for desktop-pet assets.
-///
-/// Resolution order:
-/// 1. `$CODEG_HOME/pets` (explicit override, used in tests and custom installs)
-/// 2. `$CODEG_DATA_DIR/pets` (server-mode data directory, populated by
-///    `codeg-server` from the corresponding env var)
-/// 3. `~/.codeg/pets` (default for the desktop app)
-pub fn codeg_pets_root() -> PathBuf {
-    if let Some(custom) = std::env::var_os("CODEG_HOME").filter(|s| !s.is_empty()) {
-        return PathBuf::from(custom).join(PETS_DIR_NAME);
-    }
-    if let Some(data) = std::env::var_os("CODEG_DATA_DIR").filter(|s| !s.is_empty()) {
-        return PathBuf::from(data).join(PETS_DIR_NAME);
-    }
-    dirs::home_dir()
-        .map(|h| h.join(CODEG_DIR_NAME).join(PETS_DIR_NAME))
-        .unwrap_or_else(|| PathBuf::from(CODEG_DIR_NAME).join(PETS_DIR_NAME))
-}
-
 /// Root directory for built-in browser profiles (WebView2 user-data folders
 /// on Windows, WebKitGTK data directories on Linux; macOS keeps profiles in
 /// WebKit's own store and never reads this).
 ///
-/// Resolution order matches `codeg_pets_root()`.
+/// Resolution order matches [`codeg_uploads_root`].
 pub fn codeg_browser_profiles_root() -> PathBuf {
     if let Some(custom) = std::env::var_os("CODEG_HOME").filter(|s| !s.is_empty()) {
         return PathBuf::from(custom).join(BROWSER_PROFILES_DIR_NAME);
@@ -67,7 +46,7 @@ pub fn codeg_browser_profiles_root() -> PathBuf {
 
 /// Root directory for attachments uploaded from the web client.
 ///
-/// Resolution order matches `codeg_pets_root()`:
+/// Resolution order:
 /// 1. `$CODEG_HOME/uploads`
 /// 2. `$CODEG_DATA_DIR/uploads` (server-mode data directory)
 /// 3. `~/.codeg/uploads` (desktop default)
@@ -103,27 +82,11 @@ pub fn codeg_uploads_root() -> PathBuf {
 
 /// Root directory for the user-selected workspace background image.
 ///
-/// Resolution mirrors [`codeg_pets_root`] exactly:
-/// 1. `$CODEG_HOME/backgrounds` (explicit override)
-/// 2. `$CODEG_DATA_DIR/backgrounds` (server-mode data directory)
-/// 3. `~/.codeg/backgrounds` (desktop default)
-pub fn codeg_backgrounds_root() -> PathBuf {
-    if let Some(custom) = std::env::var_os("CODEG_HOME").filter(|s| !s.is_empty()) {
-        return PathBuf::from(custom).join(BACKGROUNDS_DIR_NAME);
-    }
-    if let Some(data) = std::env::var_os("CODEG_DATA_DIR").filter(|s| !s.is_empty()) {
-        return PathBuf::from(data).join(BACKGROUNDS_DIR_NAME);
-    }
-    dirs::home_dir()
-        .map(|h| h.join(CODEG_DIR_NAME).join(BACKGROUNDS_DIR_NAME))
-        .unwrap_or_else(|| PathBuf::from(CODEG_DIR_NAME).join(BACKGROUNDS_DIR_NAME))
-}
-
 /// Root directory for application diagnostic logs (rotating files written by
 /// the `tracing` file appender; see `crate::logging`).
 ///
 /// Resolution mirrors [`codeg_uploads_root`] exactly so logs land on the same
-/// filesystem root as uploads/pets/the database:
+/// filesystem root as uploads/the database:
 /// 1. `$CODEG_HOME/logs` (explicit override)
 /// 2. `$CODEG_DATA_DIR/logs` (server-mode data directory)
 /// 3. `~/.codeg/logs` (default for the desktop app)

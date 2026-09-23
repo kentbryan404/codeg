@@ -4,7 +4,6 @@ pub use super::agent_setting::Entity as AgentSetting;
 pub use super::app_metadata::Entity as AppMetadata;
 pub use super::automation::Entity as Automation;
 pub use super::automation_run::Entity as AutomationRun;
-pub use super::canvas_node::Entity as CanvasNode;
 pub use super::chat_channel::Entity as ChatChannel;
 pub use super::chat_channel_message_log::Entity as ChatChannelMessageLog;
 pub use super::chat_channel_sender_context::Entity as ChatChannelSenderContext;

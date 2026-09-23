@@ -1,7 +1,6 @@
 pub mod agent_setting_service;
 pub mod app_metadata_service;
 pub mod automation_service;
-pub mod canvas_service;
 pub mod chat_channel_message_log_service;
 pub mod chat_channel_service;
 pub mod conversation_service;

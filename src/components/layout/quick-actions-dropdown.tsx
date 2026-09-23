@@ -8,15 +8,12 @@ import {
   Globe,
   LayoutTemplate,
   ListTodo,
-  Map as MapIcon,
   MonitorCloud,
-  PawPrint,
   Rocket,
   Settings,
   Zap,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -35,10 +32,8 @@ import { useWorkbenchRoute } from "@/contexts/workbench-route-context"
 import { useOptionalWorkspaceActions } from "@/contexts/workspace-context"
 import { useRemoteWorkspaceConnections } from "@/hooks/use-remote-workspace-connections"
 import { openProjectBootWindow } from "@/lib/api"
-import { toErrorMessage } from "@/lib/app-error"
 import { BLANK_PAGE_URL } from "@/lib/browser/browser-url"
 import { useBrowserCapabilities } from "@/lib/browser/use-browser-capabilities"
-import { openPetWindow } from "@/lib/pet/api"
 import { CloneDialog } from "./clone-dialog"
 import { RemoteWorkspaceManageDialog } from "./remote-workspace-manage-dialog"
 import { WorkspaceFolderDialog } from "./workspace-folder-dialog"
@@ -72,7 +67,6 @@ export function QuickActionsDropdown() {
   const tFolderDropdown = useTranslations("Folder.folderNameDropdown")
   const tSidebar = useTranslations("Folder.sidebar")
   const tRemote = useTranslations("RemoteWorkspace")
-  const tPet = useTranslations("Pet.manager")
 
   const { unseenFailures } = useAutomationsView()
   const { attentionCount } = useTasksView()
@@ -110,17 +104,6 @@ export function QuickActionsDropdown() {
     openConversations()
     openBrowserTab(BLANK_PAGE_URL)
   }, [openBrowserTab, openConversations])
-
-  // Summoning fails when no pet has been made active yet (the backend refuses
-  // rather than opening an empty window), so surface that instead of a silent
-  // no-op — the fix lives in Settings › Appearance › Pets.
-  const handleShowPet = useCallback(() => {
-    openPetWindow().catch((err) => {
-      toast.error(tPet("errors.summonFailed"), {
-        description: toErrorMessage(err),
-      })
-    })
-  }, [tPet])
 
   return (
     <>
@@ -248,11 +231,6 @@ export function QuickActionsDropdown() {
             <LayoutTemplate />
             {tSidebar("forge")}
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setRoute("canvas")}>
-            <MapIcon />
-            {tSidebar("canvas")}
-          </DropdownMenuItem>
-
           {desktop && (
             <>
               <DropdownMenuSeparator />
@@ -266,10 +244,6 @@ export function QuickActionsDropdown() {
                   {t("browserTab")}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onSelect={handleShowPet}>
-                <PawPrint />
-                {t("showPet")}
-              </DropdownMenuItem>
             </>
           )}
         </DropdownMenuContent>

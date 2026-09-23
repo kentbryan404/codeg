@@ -197,12 +197,6 @@ async fn execute(app: &AppHandle, cmd: &Value) -> Result<Value, String> {
             .map_err(err_string)?;
             Ok(Value::Null)
         }
-        "open_pet" => {
-            crate::commands::windows::open_pet_window(app.clone(), app.state())
-                .await
-                .map_err(err_string)?;
-            Ok(Value::Null)
-        }
         "close_window" | "focus_window" | "minimize_window" | "unminimize_window"
         | "hide_window" | "show_window" => {
             let label = str_arg(cmd, "label")?;

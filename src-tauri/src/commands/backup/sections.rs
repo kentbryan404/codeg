@@ -85,20 +85,6 @@ pub const MANAGED_SECTIONS: &[ManagedSection] = &[
         live_path: |_| crate::paths::codeg_turn_timings_root(),
     },
     ManagedSection {
-        // `preferences.json` records the chosen background by filename, so the
-        // image has to travel with it.
-        id: "backgrounds",
-        kind: SectionKind::Dir,
-        policy: SectionPolicy::AlwaysReplace,
-        live_path: |_| crate::paths::codeg_backgrounds_root(),
-    },
-    ManagedSection {
-        id: "pets",
-        kind: SectionKind::Dir,
-        policy: SectionPolicy::AlwaysReplace,
-        live_path: |_| crate::paths::codeg_pets_root(),
-    },
-    ManagedSection {
         // Includes user-authored skills, which exist nowhere else. Built-in
         // packs re-extract by id at startup (`experts::ensure_central_experts_installed`,
         // id-scoped and never a wipe), so replacing the tree self-heals those;

@@ -39,7 +39,6 @@ type TipKey =
   | "liveFeedback"
   | "skillPacks"
   | "modelProviders"
-  | "workspaceBackground"
 
 interface TipDef {
   key: TipKey
@@ -99,7 +98,6 @@ const TIPS: TipDef[] = [
   { key: "liveFeedback" },
   { key: "skillPacks" },
   { key: "modelProviders" },
-  { key: "workspaceBackground" },
 ]
 
 const highlightTitle = (chunks: ReactNode) => (

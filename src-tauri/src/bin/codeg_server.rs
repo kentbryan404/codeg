@@ -257,7 +257,6 @@ async fn async_main() -> ExitCode {
     let emitter = EventEmitter::web_only(broadcaster.clone(), acp_event_bus.clone());
 
     // Build AppState
-    let pet_state_handle = codeg_lib::pet_state_mapper::new_pet_state_handle();
     let connection_manager = codeg_lib::app_state::default_connection_manager();
     let (
         delegation_broker,
@@ -286,7 +285,6 @@ async fn async_main() -> ExitCode {
         workspace_transfer: Arc::new(
             codeg_lib::workspace_transfer::WorkspaceTransferManager::new_from_env(),
         ),
-        pet_state: pet_state_handle.clone(),
         delegation_broker: delegation_broker.clone(),
         delegation_tokens: delegation_tokens.clone(),
         delegation_socket_path: delegation_socket_path.clone(),
@@ -472,18 +470,6 @@ async fn async_main() -> ExitCode {
         state.connection_manager.clone_ref(),
         state.acp_event_bus.clone(),
         Some(state.delegation_broker.clone()),
-    ));
-
-    // Spawn the desktop pet state mapper so server-mode browsers viewing
-    // /pet receive `pet://state` and `pet://oneshot` over the WebSocket
-    // bridge, just like the Tauri webview does in desktop mode. ACP events
-    // come through the typed bus; folder/app side-channels stay on the
-    // JSON broadcaster.
-    tokio::spawn(codeg_lib::pet_state_mapper::pet_state_subscriber_task(
-        state.acp_event_bus.clone(),
-        state.event_broadcaster.clone(),
-        state.emitter.clone(),
-        pet_state_handle,
     ));
 
     // Spawn the idle sweep so connections abandoned without an explicit

@@ -44,13 +44,6 @@ import {
   STORAGE_KEY_TERMINAL_FONT_CUSTOM,
   STORAGE_KEY_TERMINAL_FONT_SIZE,
   STORAGE_KEY_TERMINAL_LIGATURES,
-  STORAGE_KEY_WORKSPACE_BG_ENABLED,
-  STORAGE_KEY_WORKSPACE_BG_MASK,
-  STORAGE_KEY_WORKSPACE_BG_BLUR,
-  STORAGE_KEY_WORKSPACE_BG_FILL,
-  STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY,
-  STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION,
-  STORAGE_KEY_WORKSPACE_BG_SOURCE_URL,
   STORAGE_KEY_CUSTOM_THEME,
   STORAGE_KEY_CUSTOM_THEME_ENABLED,
   STORAGE_KEY_CUSTOM_CSS,
@@ -72,24 +65,6 @@ import {
   matchShortcutEvent,
   resolveWindowZoomAction,
 } from "@/lib/keyboard-shortcuts"
-import {
-  DEFAULT_WORKSPACE_BG_ENABLED,
-  DEFAULT_WORKSPACE_BG_MASK_OPACITY,
-  DEFAULT_WORKSPACE_BG_IMAGE_BLUR,
-  DEFAULT_WORKSPACE_BG_PANEL_OPACITY,
-  DEFAULT_WORKSPACE_BG_FILL_MODE,
-  clampMaskOpacity,
-  clampImageBlur,
-  clampPanelOpacity,
-  isValidFillMode,
-  createBackgroundObjectUrl,
-  revokeBackgroundObjectUrl,
-  readWorkspaceBackground,
-  setWorkspaceBackground,
-  clearWorkspaceBackground,
-  type WorkspaceBgFillMode,
-} from "@/lib/workspace-background"
-import { downloadWorkspaceBgMarket } from "@/lib/workspace-background-market"
 
 function syncTrafficLightPosition(zoom: number) {
   if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window))
@@ -137,34 +112,6 @@ type AppearanceContextValue = {
   setEditorWordWrap: (on: boolean) => void
   terminalLigatures: boolean
   setTerminalLigatures: (on: boolean) => void
-  /** Workspace 背景图片总开关。关闭时不加载图片、不触发任何表面半透明。 */
-  workspaceBgEnabled: boolean
-  setWorkspaceBgEnabled: (on: boolean) => void
-  /** 暗化遮罩不透明度（朝 --background 的面纱，明暗自适配），0–0.9。 */
-  workspaceBgMaskOpacity: number
-  setWorkspaceBgMaskOpacity: (v: number) => void
-  /** 背景图片模糊半径（px），0–24。 */
-  workspaceBgImageBlur: number
-  setWorkspaceBgImageBlur: (v: number) => void
-  /** 结构性面板（侧栏/面板/标签条）不透明度，驱动 --ws-surface-alpha，0.3–1。 */
-  workspaceBgPanelOpacity: number
-  setWorkspaceBgPanelOpacity: (v: number) => void
-  /** 背景图片填充模式（cover/contain/center/tile）。 */
-  workspaceBgFillMode: WorkspaceBgFillMode
-  setWorkspaceBgFillMode: (mode: WorkspaceBgFillMode) => void
-  /** 已解析的背景图片 blob URL（异步从磁盘加载），无图为 null。 */
-  workspaceBgImageUrl: string | null
-  /** 上传并设置背景图片（base64）。写盘后重新读回并建 blob URL。 */
-  setWorkspaceBackgroundImage: (imageBase64: string) => Promise<void>
-  /** 移除背景图片（删盘 + revoke blob URL）。 */
-  removeWorkspaceBackground: () => Promise<void>
-  /** 从壁纸市场下载并应用背景。写盘在后端，成功后与本地选图共用同一套失效 + 重读盘。 */
-  downloadMarketWorkspaceBackground: (
-    url: string,
-    sourceUrl: string
-  ) => Promise<void>
-  /** 当前背景的市场来源页（https://wallhaven.cc/w/<id>）；本地图 / 未设置为 null。 */
-  workspaceBgSourceUrl: string | null
   /** 当前解析出的明暗模式（读 <html> 的 dark 类，非 next-themes 的 resolvedTheme）。 */
   isDarkMode: boolean
   /** 主题 token 覆盖（明暗两套，键名不带 `--`，= shadcn cssVars 形状）。 */
@@ -239,32 +186,6 @@ function readBool(key: string, def: boolean): boolean {
     return v === null ? def : v === "1"
   } catch {
     return def
-  }
-}
-
-function readNumber(
-  key: string,
-  def: number,
-  clampFn: (v: number) => number
-): number {
-  if (typeof document === "undefined") return def
-  try {
-    const raw = localStorage.getItem(key)
-    if (raw === null) return def
-    const n = parseFloat(raw)
-    return Number.isNaN(n) ? def : clampFn(n)
-  } catch {
-    return def
-  }
-}
-
-function readWorkspaceBgFillMode(): WorkspaceBgFillMode {
-  if (typeof document === "undefined") return DEFAULT_WORKSPACE_BG_FILL_MODE
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_WORKSPACE_BG_FILL)
-    return isValidFillMode(raw) ? raw : DEFAULT_WORKSPACE_BG_FILL_MODE
-  } catch {
-    return DEFAULT_WORKSPACE_BG_FILL_MODE
   }
 }
 
@@ -409,50 +330,6 @@ export function AppearanceProvider({
     readBool(STORAGE_KEY_TERMINAL_LIGATURES, false)
   )
 
-  // Workspace 背景图片配置（图片 URL 异步加载，初始 null）。
-  const [workspaceBgEnabled, setWorkspaceBgEnabledState] = useState<boolean>(
-    () =>
-      readBool(STORAGE_KEY_WORKSPACE_BG_ENABLED, DEFAULT_WORKSPACE_BG_ENABLED)
-  )
-  const [workspaceBgMaskOpacity, setWorkspaceBgMaskOpacityState] =
-    useState<number>(() =>
-      readNumber(
-        STORAGE_KEY_WORKSPACE_BG_MASK,
-        DEFAULT_WORKSPACE_BG_MASK_OPACITY,
-        clampMaskOpacity
-      )
-    )
-  const [workspaceBgImageBlur, setWorkspaceBgImageBlurState] = useState<number>(
-    () =>
-      readNumber(
-        STORAGE_KEY_WORKSPACE_BG_BLUR,
-        DEFAULT_WORKSPACE_BG_IMAGE_BLUR,
-        clampImageBlur
-      )
-  )
-  const [workspaceBgPanelOpacity, setWorkspaceBgPanelOpacityState] =
-    useState<number>(() =>
-      readNumber(
-        STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY,
-        DEFAULT_WORKSPACE_BG_PANEL_OPACITY,
-        clampPanelOpacity
-      )
-    )
-  const [workspaceBgFillMode, setWorkspaceBgFillModeState] =
-    useState<WorkspaceBgFillMode>(() => readWorkspaceBgFillMode())
-  const [workspaceBgImageUrl, setWorkspaceBgImageUrlState] = useState<
-    string | null
-  >(null)
-  const [workspaceBgSourceUrl, setWorkspaceBgSourceUrlState] = useState<
-    string | null
-  >(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY_WORKSPACE_BG_SOURCE_URL) ?? null
-    } catch {
-      return null
-    }
-  })
-
   // 自定义样式。初值同样从 localStorage 读 —— 视觉已由 inline 脚本就位，这里只是
   // 回填状态，不会造成闪烁（下方 apply effect 首次运行写的是同一份值，幂等）。
   const [customTheme, setCustomThemeState] = useState<CustomTheme>(() =>
@@ -567,38 +444,6 @@ export function AppearanceProvider({
     persist(STORAGE_KEY_TERMINAL_LIGATURES, on ? "1" : "0")
   }, [])
 
-  // enabled 与 panelOpacity 的 DOM 应用（data-workspace-bg 属性 + --ws-surface-alpha）
-  // 统一交给下方一个 effect，覆盖 mount、重启后 re-enable、跨标签所有路径。setter 只
-  // 更新 state + 持久化，避免 --ws-surface-alpha 与 state 失同步（否则重启后 re-enable
-  // 会沿用默认值而非用户设定值）。
-  const setWorkspaceBgEnabled = useCallback((on: boolean) => {
-    setWorkspaceBgEnabledState(on)
-    persist(STORAGE_KEY_WORKSPACE_BG_ENABLED, on ? "1" : "0")
-  }, [])
-
-  const setWorkspaceBgMaskOpacity = useCallback((v: number) => {
-    const clamped = clampMaskOpacity(v)
-    setWorkspaceBgMaskOpacityState(clamped)
-    persist(STORAGE_KEY_WORKSPACE_BG_MASK, String(clamped))
-  }, [])
-
-  const setWorkspaceBgImageBlur = useCallback((v: number) => {
-    const clamped = clampImageBlur(v)
-    setWorkspaceBgImageBlurState(clamped)
-    persist(STORAGE_KEY_WORKSPACE_BG_BLUR, String(clamped))
-  }, [])
-
-  const setWorkspaceBgPanelOpacity = useCallback((v: number) => {
-    const clamped = clampPanelOpacity(v)
-    setWorkspaceBgPanelOpacityState(clamped)
-    persist(STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY, String(clamped))
-  }, [])
-
-  const setWorkspaceBgFillMode = useCallback((mode: WorkspaceBgFillMode) => {
-    setWorkspaceBgFillModeState(mode)
-    persist(STORAGE_KEY_WORKSPACE_BG_FILL, mode)
-  }, [])
-
   // ─── 自定义样式：setter ───
 
   const setCustomThemeToken = useCallback(
@@ -655,81 +500,6 @@ export function AppearanceProvider({
     400
   )
 
-  // 并发 reload 的代次守卫：只有最新一次请求的读结果被应用。避免旧读在更晚的
-  // 写/清空之后完成、把状态回退到过期图（re-enable 与 setImage/remove、或多次快速
-  // 切换的竞态）。写入窗口收不到自己的 storage 事件，本地一致性全靠这个守卫。
-  const reloadGenRef = useRef(0)
-
-  // 本地选图 / 移除背景时，市场「使用中」标记随之失效。
-  const clearWorkspaceBgSourceUrl = useCallback(() => {
-    try {
-      localStorage.removeItem(STORAGE_KEY_WORKSPACE_BG_SOURCE_URL)
-    } catch {
-      // localStorage unavailable
-    }
-    setWorkspaceBgSourceUrlState(null)
-  }, [])
-
-  // 从磁盘重新读取背景图并刷新 blob URL（revoke 旧、建新或置 null）。写/换/删图
-  // 与跨窗口版本戳变更都复用它，确保 URL 生命周期与磁盘状态一致。
-  const reloadWorkspaceBackgroundImage = useCallback(async () => {
-    const gen = ++reloadGenRef.current
-    try {
-      const asset = await readWorkspaceBackground()
-      // 期间有更新的请求（写/清空/更晚的 reload）→ 丢弃本次过期结果，也不建 blob。
-      if (gen !== reloadGenRef.current) return
-      setWorkspaceBgImageUrlState((prev) => {
-        revokeBackgroundObjectUrl(prev)
-        return asset ? createBackgroundObjectUrl(asset) : null
-      })
-    } catch {
-      // 读盘失败静默（无背景即可）。
-    }
-  }, [])
-
-  const setWorkspaceBackgroundImage = useCallback(
-    async (imageBase64: string) => {
-      await setWorkspaceBackground(imageBase64)
-      // 本地图覆盖市场图 → 「使用中」来源标记失效。
-      clearWorkspaceBgSourceUrl()
-      // 写盘持久化后立即广播版本戳（不等本地 readback）：避免设置窗口在读回大图
-      // 期间被关闭，导致 workspace 窗口收不到失效信号、停留在旧图。随后再刷新本地预览。
-      persist(STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION, String(Date.now()))
-      await reloadWorkspaceBackgroundImage()
-    },
-    [clearWorkspaceBgSourceUrl, reloadWorkspaceBackgroundImage]
-  )
-
-  // 壁纸市场下载：字节直接由后端落盘（不走前端 base64 往返），成功后与本地选图
-  // 共用同一套失效广播 + 重读盘，保证所有窗口一致换图。
-  const downloadMarketWorkspaceBackground = useCallback(
-    async (url: string, sourceUrl: string) => {
-      await downloadWorkspaceBgMarket(url, sourceUrl)
-      try {
-        localStorage.setItem(STORAGE_KEY_WORKSPACE_BG_SOURCE_URL, sourceUrl)
-      } catch {
-        // localStorage unavailable
-      }
-      setWorkspaceBgSourceUrlState(sourceUrl)
-      persist(STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION, String(Date.now()))
-      await reloadWorkspaceBackgroundImage()
-    },
-    [reloadWorkspaceBackgroundImage]
-  )
-
-  const removeWorkspaceBackground = useCallback(async () => {
-    await clearWorkspaceBackground()
-    clearWorkspaceBgSourceUrl()
-    // 使任何在途 reload 失效（否则先前发起的旧读可能在清空后完成、恢复已删的图），
-    // 立即广播失效戳，再置空本地预览。
-    reloadGenRef.current += 1
-    persist(STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION, String(Date.now()))
-    setWorkspaceBgImageUrlState((prev) => {
-      revokeBackgroundObjectUrl(prev)
-      return null
-    })
-  }, [clearWorkspaceBgSourceUrl])
-
   // Sync traffic-light position and appearance mode on mount
   useEffect(() => {
     syncTrafficLightPosition(zoomLevel)
@@ -753,30 +523,6 @@ export function AppearanceProvider({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // enabled + panelOpacity 的 DOM 单一同步点：属性驱动 globals.css 的半透明规则，
-  // CSS 变量驱动面板不透明度。覆盖 mount / 重启后 re-enable / setter / 跨标签，确保
-  // DOM 始终与 state 一致（inline 脚本只在首帧 enabled 时预置，之后由此接管）。
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-workspace-bg",
-      workspaceBgEnabled ? "on" : "off"
-    )
-    if (workspaceBgEnabled) {
-      document.documentElement.style.setProperty(
-        "--ws-surface-alpha",
-        String(workspaceBgPanelOpacity)
-      )
-    }
-  }, [workspaceBgEnabled, workspaceBgPanelOpacity])
-
-  // 背景图片异步从磁盘加载：仅在启用时拉取，未启用零开销。图片较大，晚到几十~
-  // 几百 ms 只是装饰层淡入（底色是 --background），可接受。写/换/删与跨窗口同步复用
-  // reload helper。
-  useEffect(() => {
-    if (!workspaceBgEnabled) return
-    void reloadWorkspaceBackgroundImage()
-  }, [workspaceBgEnabled, reloadWorkspaceBackgroundImage])
 
   // ─── 自定义样式：DOM 应用 ───
 
@@ -958,58 +704,6 @@ export function AppearanceProvider({
       if (e.key && FONT_KEYS.has(e.key)) {
         rehydrateFonts()
       }
-      // Workspace 背景配置跨标签页同步。enabled/panel-opacity 需同步 DOM
-      // （属性 + CSS 变量），mask/blur/fill 仅同步 state（React 层消费）。
-      // enabled/panel-opacity 只更新 state；DOM（属性 + --ws-surface-alpha）由上方
-      // 统一 effect 跟随 state 同步。
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_ENABLED) {
-        setWorkspaceBgEnabledState(
-          readBool(
-            STORAGE_KEY_WORKSPACE_BG_ENABLED,
-            DEFAULT_WORKSPACE_BG_ENABLED
-          )
-        )
-      }
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY) {
-        setWorkspaceBgPanelOpacityState(
-          readNumber(
-            STORAGE_KEY_WORKSPACE_BG_PANEL_OPACITY,
-            DEFAULT_WORKSPACE_BG_PANEL_OPACITY,
-            clampPanelOpacity
-          )
-        )
-      }
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_MASK) {
-        setWorkspaceBgMaskOpacityState(
-          readNumber(
-            STORAGE_KEY_WORKSPACE_BG_MASK,
-            DEFAULT_WORKSPACE_BG_MASK_OPACITY,
-            clampMaskOpacity
-          )
-        )
-      }
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_BLUR) {
-        setWorkspaceBgImageBlurState(
-          readNumber(
-            STORAGE_KEY_WORKSPACE_BG_BLUR,
-            DEFAULT_WORKSPACE_BG_IMAGE_BLUR,
-            clampImageBlur
-          )
-        )
-      }
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_FILL) {
-        setWorkspaceBgFillModeState(readWorkspaceBgFillMode())
-      }
-      // 图片版本戳变化（另一窗口写/换/删图）：重新读盘刷新本窗口 blob URL。
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_IMAGE_VERSION) {
-        void reloadWorkspaceBackgroundImage()
-      }
-      // 来源页跟着图一起变（另一窗口换成市场图 / 本地图 / 移除）。不同步的话本窗口
-      // 的市场面板会继续把一张已被换掉的壁纸标成「使用中」—— 那不是标记丢了，
-      // 而是标记在说谎。removeItem 时 newValue 为 null。
-      if (e.key === STORAGE_KEY_WORKSPACE_BG_SOURCE_URL) {
-        setWorkspaceBgSourceUrlState(e.newValue ?? null)
-      }
       // 自定义样式跨窗口同步。主题与 CSS 都要顺手重置防抖基线，否则本窗口会把
       // 刚收到的别人的值当成本地编辑再写回去，两个窗口互相回声。
       if (e.key === STORAGE_KEY_CUSTOM_THEME) {
@@ -1044,11 +738,7 @@ export function AppearanceProvider({
     }
     window.addEventListener("storage", onStorage)
     return () => window.removeEventListener("storage", onStorage)
-  }, [
-    reloadWorkspaceBackgroundImage,
-    resetCustomThemeBaseline,
-    resetCustomCssBaseline,
-  ])
+  }, [resetCustomThemeBaseline, resetCustomCssBaseline])
 
   return (
     <AppearanceContext.Provider
@@ -1075,21 +765,6 @@ export function AppearanceProvider({
         setEditorWordWrap,
         terminalLigatures,
         setTerminalLigatures,
-        workspaceBgEnabled,
-        setWorkspaceBgEnabled,
-        workspaceBgMaskOpacity,
-        setWorkspaceBgMaskOpacity,
-        workspaceBgImageBlur,
-        setWorkspaceBgImageBlur,
-        workspaceBgPanelOpacity,
-        setWorkspaceBgPanelOpacity,
-        workspaceBgFillMode,
-        setWorkspaceBgFillMode,
-        workspaceBgImageUrl,
-        setWorkspaceBackgroundImage,
-        downloadMarketWorkspaceBackground,
-        removeWorkspaceBackground,
-        workspaceBgSourceUrl,
         isDarkMode,
         customTheme,
         setCustomThemeToken,

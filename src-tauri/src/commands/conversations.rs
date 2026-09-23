@@ -2741,11 +2741,6 @@ pub async fn delete_conversation_with_cleanup_core(
         emit_conversation_upsert(emitter, conn, parent_id).await;
     }
     cleanup_tabs_for_deleted_conversation(emitter, conn, conversation_id).await;
-    // Canvas references (pinned cards, custom-region memberships) survive the
-    // soft delete for the same reason tabs do — no FK cascade ever fires — so
-    // they get the same explicit scrub, at the same funnel.
-    crate::commands::canvas::cleanup_canvas_for_deleted_conversation(emitter, conn, conversation_id)
-        .await;
     if let Some(folder_id) = folder_id {
         cleanup_chat_folder_for_deleted_conversation(conn, folder_id).await;
     }
