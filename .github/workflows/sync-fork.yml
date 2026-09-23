@@ -1,6 +1,6 @@
 name: Sync fork from upstream
 
-# Keep this fork's `main` in step with xintaofei/codeg once a day.
+# Keep this fork's `main` in step with xintaofei/codeg twice a day.
 #
 # Merge, not a hard reset: this workflow file lives on `main` and is not in
 # upstream, so resetting `main` to `upstream/main` would delete the file on the
@@ -11,8 +11,10 @@ name: Sync fork from upstream
 # stored anywhere. Upstream is a public repository, so the fetch needs no auth.
 on:
   schedule:
-    # 03:17 UTC daily — off the top of the hour to dodge scheduler load.
-    - cron: "17 3 * * *"
+    # GitHub Actions cron is UTC only. Beijing (UTC+8) 08:00 -> 00:00 UTC,
+    # 20:00 -> 12:00 UTC.
+    - cron: "0 0 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch:
 
 permissions:
