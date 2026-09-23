@@ -300,6 +300,8 @@
     "rollbackSuccess": "Revertido para a versão anterior. Recarregando...",
     "rollbackFailed": "Falha ao reverter. Verifique os registros do servidor.",
     "updateErrors": {
+      "permissionDenied": "Não é possível gravar em {path}, então as atualizações não podem ser instaladas no local. Atualize manualmente com privilégios de administrador ou verifique as permissões da instalação.",
+      "targetWriteFailed": "Não é possível gravar em {path}, então as atualizações não podem ser instaladas no local: {reason}",
       "sourceUnavailable": "Não foi possível acessar a fonte de atualização. Verifique sua rede ou proxy e tente novamente.",
       "network": "Falha na conexão de rede. Verifique sua rede ou proxy e tente novamente.",
       "downloadFailed": "Falha ao baixar o pacote de atualização. Tente novamente mais tarde.",
@@ -4221,7 +4223,7 @@
     "agentTypeRequired": "O tipo de agente é obrigatório.",
     "agentTypeImmutableHint": "O tipo de agente não pode ser alterado após a criação.",
     "model": "Modelo",
-    "modelPlaceholderCodex": "gpt-5.6-sol / gpt-5.5",
+    "modelPlaceholderCodex": "gpt-6-sol / gpt-6-luna",
     "modelPlaceholderGemini": "gemini-3-pro-preview",
     "claudeMainModel": "Modelo Principal",
     "claudeReasoningModel": "Modelo de Raciocínio (pensamento)",

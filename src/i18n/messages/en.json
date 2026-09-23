@@ -300,6 +300,8 @@
     "rollbackSuccess": "Rolled back to the previous version. Reloading...",
     "rollbackFailed": "Rollback failed. Check the server logs.",
     "updateErrors": {
+      "permissionDenied": "Cannot write to {path}, so updates can't be installed in place. Update manually with administrator privileges or check installation permissions.",
+      "targetWriteFailed": "Cannot write to {path}, so updates can't be installed in place: {reason}",
       "sourceUnavailable": "Cannot reach the update source. Check your network or proxy and try again.",
       "network": "Network connection failed. Check your network or proxy and try again.",
       "downloadFailed": "Failed to download update package. Please try again later.",
@@ -4240,7 +4242,7 @@
     "agentTypeRequired": "Agent type is required.",
     "agentTypeImmutableHint": "Agent type cannot be changed after creation.",
     "model": "Model",
-    "modelPlaceholderCodex": "gpt-5.6-sol / gpt-5.5",
+    "modelPlaceholderCodex": "gpt-6-sol / gpt-6-luna",
     "modelPlaceholderGemini": "gemini-3-pro-preview",
     "claudeMainModel": "Main Model",
     "claudeReasoningModel": "Reasoning Model (thinking)",
