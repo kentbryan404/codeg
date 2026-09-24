@@ -101,6 +101,7 @@ import {
 } from "@/lib/queue-flush"
 import { TurnBusyError, isNoActiveTurnRejection } from "@/lib/turn-busy"
 import { toErrorMessage } from "@/lib/app-error"
+import { notify } from "@/lib/notify"
 import {
   claimRuntimeSession,
   getConversationIdByExternalIdFromStore,
@@ -116,6 +117,7 @@ import {
   buildSteerPayload,
   extractUserImagesFromDraft,
   getPromptDraftDisplayText,
+  promptDraftTitleSeed,
 } from "@/lib/prompt-draft"
 import {
   type AgentType,
@@ -1211,10 +1213,7 @@ const ConversationTabView = memo(function ConversationTabView({
       // depends on the flush-on-connect queue to deliver its first prompt.
       if (createConversationPendingRef.current) return
       createConversationPendingRef.current = true
-      const title = getPromptDraftDisplayText(
-        draft,
-        sharedT("attachedResources")
-      ).slice(0, 80)
+      const title = promptDraftTitleSeed(draft, sharedT("attachedResources"))
       const chatSend = sendOwnTab?.isChat === true
       const chatExistingDir = sendOwnTab?.workingDir
 
@@ -1435,18 +1434,21 @@ const ConversationTabView = memo(function ConversationTabView({
       } catch (err) {
         // A turn in flight is transient here, not a failure to report as one —
         // there is no draft to re-queue, so say so and let the user retry.
-        toast.error(
-          err instanceof TurnBusyError
-            ? t("forkSessionBusy")
-            : t("forkSessionFailed", {
-                error:
-                  err instanceof Error
-                    ? err.message
-                    : typeof err === "object" && err !== null
-                      ? JSON.stringify(err)
-                      : String(err),
-              })
-        )
+        notify({
+          level: "error",
+          key: `fork-failed:${connectionId}`,
+          title:
+            err instanceof TurnBusyError
+              ? t("forkSessionBusy")
+              : t("forkSessionFailed", {
+                  error:
+                    err instanceof Error
+                      ? err.message
+                      : typeof err === "object" && err !== null
+                        ? JSON.stringify(err)
+                        : String(err),
+                }),
+        })
       }
     },
     [
@@ -1470,14 +1472,22 @@ const ConversationTabView = memo(function ConversationTabView({
       if (!connectionId) return false
       try {
         const stopped = await acpStopAsyncTask(connectionId, taskId)
-        if (!stopped) toast.warning(tAsyncTasks("stopDeclined"))
+        if (!stopped) {
+          notify({
+            level: "warning",
+            key: `async-task-stop:${connectionId}:${taskId}`,
+            title: tAsyncTasks("stopDeclined"),
+          })
+        }
         return stopped
       } catch (err) {
-        toast.error(
-          tAsyncTasks("stopFailed", {
+        notify({
+          level: "error",
+          key: `async-task-stop:${connectionId}:${taskId}`,
+          title: tAsyncTasks("stopFailed", {
             error: err instanceof Error ? err.message : String(err),
-          })
-        )
+          }),
+        })
         return false
       }
     },
@@ -1989,14 +1999,15 @@ const ConversationTabView = memo(function ConversationTabView({
     goalActions,
   ])
 
-  // AIR session-failure strip actions. `retry` re-submits the LAST user
-  // prompt through the message queue — same mechanism as the live-feedback
-  // resend fallback: enqueue survives the turn-end status race and flushes as
-  // soon as the connection can take a prompt, so the retry is never silently
-  // dropped. `login` opens the settings window on this agent's page (auth
-  // lives there) — a `router.push` would swap the workspace itself for the
-  // settings route; `new_session` reuses the load-error banner's fresh-draft
-  // path.
+  // AIR session-failure recovery actions — the buttons on a failed turn's
+  // notification (the provider raises it; this view answers it). `retry`
+  // re-submits the LAST user prompt through the message queue — same
+  // mechanism as the live-feedback resend fallback: enqueue survives the
+  // turn-end status race and flushes as soon as the connection can take a
+  // prompt, so the retry is never silently dropped. `login` opens the settings
+  // window on this agent's page (auth lives there) — a `router.push` would
+  // swap the workspace itself for the settings route; `new_session` reuses
+  // the load-error banner's fresh-draft path.
   const tSessionFailure = useTranslations("Folder.chat.sessionFailure")
   const detailTurns = detail?.turns
   const handleSessionFailureAction = useCallback(
@@ -2044,6 +2055,18 @@ const ConversationTabView = memo(function ConversationTabView({
       tSessionFailure,
     ]
   )
+  // Offered to this session's failure notifications while the view is
+  // mounted (see `AcpActionsValue.registerSessionFailureActions`). Owners of a
+  // live connection only — mirrors the goal-control gate: a viewer watches the
+  // session, and recovering it is the owner's call.
+  const canRecoverSession = conn.connectionId !== null && !conn.isViewer
+  useEffect(() => {
+    if (!canRecoverSession) return
+    return acpActions.registerSessionFailureActions(
+      tabId,
+      handleSessionFailureAction
+    )
+  }, [acpActions, canRecoverSession, handleSessionFailureAction, tabId])
 
   // Closing a strip is client-local (it only resolves the record in this
   // client's projection), so unlike the recovery actions it is offered to
@@ -2185,15 +2208,19 @@ const ConversationTabView = memo(function ConversationTabView({
           toast.info(tCmp("steerQueuedInstead"))
           return
         }
-        toast.error(
-          tCmp(feedback.channel === "pull" ? "steerNoteFailed" : "steerFailed"),
-          { description: toErrorMessage(err) }
-        )
+        notify({
+          level: "error",
+          key: `steer-failed:${tabId}`,
+          title: tCmp(
+            feedback.channel === "pull" ? "steerNoteFailed" : "steerFailed"
+          ),
+          description: toErrorMessage(err),
+        })
       } finally {
         setQueueSteerInFlight(false)
       }
     },
-    [msgQueue, feedbackSteer, mqRemove, feedback.channel, tCmp]
+    [msgQueue, feedbackSteer, mqRemove, feedback.channel, tabId, tCmp]
   )
 
   return (
@@ -2213,16 +2240,8 @@ const ConversationTabView = memo(function ConversationTabView({
       promptCapabilities={conn.promptCapabilities}
       defaultPath={workingDirForConnection}
       agentName={getAgentLabel(selectedAgent)}
-      error={conn.error}
       claudeApiRetry={conn.claudeApiRetry}
       sessionFailures={conn.sessionFailures}
-      onSessionFailureAction={
-        // Owners of a live connection only — mirrors the goal-control gate:
-        // viewers must see the strips but not drive recovery.
-        conn.connectionId !== null && !conn.isViewer
-          ? handleSessionFailureAction
-          : undefined
-      }
       onSessionFailureDismiss={handleSessionFailureDismiss}
       asyncTasks={conn.asyncTasks}
       onStopAsyncTask={
