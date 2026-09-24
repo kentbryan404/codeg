@@ -190,6 +190,8 @@
     "enableProxy": "Enable system proxy",
     "proxyAddress": "Proxy address",
     "proxyHint": "Supports http(s)/socks5, example: {example}. Only effective when system proxy is enabled.",
+    "proxyBypass": "Bypass proxy for",
+    "proxyBypassHint": "Separate entries with commas and no spaces, e.g. <code>{example}</code>. <code>example.com</code> matches that domain, <code>.example.com</code> matches all of its subdomains, and IP addresses work too. Local addresses <code>localhost,127.0.0.1,::1</code> always connect directly and do not need to be listed. The list takes effect as the NO_PROXY environment variable.",
     "save": "Save",
     "saving": "Saving...",
     "proxyRequired": "Proxy URL is required when proxy is enabled",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "Open Agents settings",
           "retry": "Retry"
         },
-        "agentsSetupHint": "Open Settings > Agents to manage installation.",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "Unable to read current Agent configuration.",
           "disabled": "{agent} is disabled in Agents settings. Enable it before connecting.",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "{agent} needs you to sign in again before it can run this turn. Sign in from Settings, then send the message again.",
           "agentAuthRequired": "{agent} could not start a session: it has no usable credential. Sign in again from Settings → Agents → {agent}, then reopen this conversation.",
           "grokModelSwitchIncompatibleAgent": "{agent} can't switch to that model in an existing conversation. Start a new session to use it.",
+          "setModeFailed": "{agent} couldn't switch modes.",
+          "setConfigOptionFailed": "{agent} couldn't apply that setting.",
+          "goalControlFailed": "{agent} couldn't update the goal.",
+          "imageDropped": "{agent} didn't receive an attached image.",
+          "sessionLoadFallback": "{agent} couldn't restore the previous session and started a new one — it no longer has the earlier context.",
           "turnFailedEmpty": "{agent} ended the turn without producing any response.",
           "turnFailedEmptyProtocol": "{agent} produced output that codeg could not parse — the agent version may not match the protocol.",
-          "turnFailedEmptyMetadata": "{agent} sent only status updates this turn (plan / mode / usage) and no reply.",
-          "detailsInAlerts": "Open Alerts in the status bar and expand the details to see the agent's output."
+          "turnFailedEmptyMetadata": "{agent} sent only status updates this turn (plan / mode / usage) and no reply."
         },
         "unableReadAgentConfig": "Unable to read Agent config: {message}",
         "connectFailedTitle": "{agent} connection failed",
         "toolFallbackTitle": "Tool",
-        "eventErrorTitle": "Agent Error",
         "notificationTurnComplete": "{agent} has finished responding",
         "notificationError": "{agent} error: {message}",
         "notificationQuestion": "{agent} is waiting for your answer",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}, {delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "{agent} set {option} to {actual} instead of {requested}"
+        "configOptionAdjusted": "{agent} set {option} to {actual} instead of {requested}",
+        "noticeTitle": "{agent}: {title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "Reconnecting…",
         "reconnectDisabledDuringTurn": "Available once the current turn finishes",
         "dismiss": "Dismiss",
-        "reconnectFailed": "Failed to reconnect session",
         "applied": "New configuration applied"
       },
       "piProjectTrust": {

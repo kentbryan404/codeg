@@ -190,6 +190,8 @@
     "enableProxy": "システムプロキシを有効化",
     "proxyAddress": "プロキシアドレス",
     "proxyHint": "http(s)/socks5 をサポート。例: {example}。システムプロキシ有効時のみ有効です。",
+    "proxyBypass": "プロキシを使用しないアドレス",
+    "proxyBypassHint": "複数のアドレスは半角カンマ <code>,</code> で区切り、スペースは入れません。例: <code>{example}</code>。<code>example.com</code> はそのドメインに、<code>.example.com</code> はそのすべてのサブドメインに一致します。IP アドレスも指定できます。ローカルアドレス <code>localhost,127.0.0.1,::1</code> は常に直接接続されるため、入力は不要です。このリストは環境変数 NO_PROXY として適用されます。",
     "save": "保存",
     "saving": "保存中...",
     "proxyRequired": "プロキシ有効時はプロキシ URL が必要です",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "エージェント設定を開く",
           "retry": "再試行"
         },
-        "agentsSetupHint": "インストール管理は「設定 > エージェント」を開いてください。",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "現在のエージェント設定を読み取れません。",
           "disabled": "{agent} はエージェント設定で無効になっています。接続前に有効化してください。",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "{agent} はこのターンを実行する前に再度のサインインを必要としています。設定からサインインしてから、メッセージを送り直してください。",
           "agentAuthRequired": "{agent} はセッションを開始できませんでした。使用可能な認証情報がありません。設定 → エージェント → {agent} で再度サインインしてから、この会話を開き直してください。",
           "grokModelSwitchIncompatibleAgent": "{agent} は既存の会話ではこのモデルに切り替えられません。新しいセッションを開始して使用してください。",
+          "setModeFailed": "{agent} はモードを切り替えられませんでした。",
+          "setConfigOptionFailed": "{agent} はその設定を適用できませんでした。",
+          "goalControlFailed": "{agent} は目標を更新できませんでした。",
+          "imageDropped": "添付画像の 1 枚が {agent} に届きませんでした。",
+          "sessionLoadFallback": "{agent} は以前のセッションを復元できなかったため、新しいセッションを開始しました。以前のコンテキストは引き継がれていません。",
           "turnFailedEmpty": "{agent} は応答を生成せずにターンを終了しました。",
           "turnFailedEmptyProtocol": "{agent} の出力を codeg が解析できませんでした。エージェントのバージョンがプロトコルと一致していない可能性があります。",
-          "turnFailedEmptyMetadata": "{agent} はこのターンでステータス更新（計画 / モード / 使用量）のみを送信し、応答はありませんでした。",
-          "detailsInAlerts": "ステータスバーのアラートを開き、詳細を展開するとエージェントの出力を確認できます。"
+          "turnFailedEmptyMetadata": "{agent} はこのターンでステータス更新（計画 / モード / 使用量）のみを送信し、応答はありませんでした。"
         },
         "unableReadAgentConfig": "エージェント設定を読み取れません: {message}",
         "connectFailedTitle": "{agent} の接続に失敗しました",
         "toolFallbackTitle": "ツール",
-        "eventErrorTitle": "エージェントエラー",
         "notificationTurnComplete": "{agent} の応答が完了しました",
         "notificationError": "{agent} エラー：{message}",
         "notificationQuestion": "{agent} が回答を待っています",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}、{delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "{agent} は{option}を {requested} ではなく {actual} にしました"
+        "configOptionAdjusted": "{agent} は{option}を {requested} ではなく {actual} にしました",
+        "noticeTitle": "{agent}：{title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "再接続中…",
         "reconnectDisabledDuringTurn": "現在のターンが完了すると再接続できます",
         "dismiss": "閉じる",
-        "reconnectFailed": "セッションの再接続に失敗しました",
         "applied": "新しい設定を適用しました"
       },
       "piProjectTrust": {

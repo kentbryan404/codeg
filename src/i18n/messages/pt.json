@@ -190,6 +190,8 @@
     "enableProxy": "Ativar proxy do sistema",
     "proxyAddress": "Endereço do proxy",
     "proxyHint": "Suporta http(s)/socks5, exemplo: {example}. Só funciona quando o proxy do sistema está ativado.",
+    "proxyBypass": "Ignorar o proxy para",
+    "proxyBypassHint": "Separe as entradas com vírgulas, sem espaços, por exemplo <code>{example}</code>. <code>example.com</code> corresponde a esse domínio e <code>.example.com</code> a todos os seus subdomínios; endereços IP também são aceitos. Os endereços locais <code>localhost,127.0.0.1,::1</code> sempre se conectam diretamente e não precisam ser adicionados. A lista é aplicada como a variável de ambiente NO_PROXY.",
     "save": "Salvar",
     "saving": "Salvando...",
     "proxyRequired": "A URL do proxy é obrigatória quando o proxy está ativado",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "Abrir configurações de agentes",
           "retry": "Tentar novamente"
         },
-        "agentsSetupHint": "Abra Configurações > Agentes para gerenciar a instalação.",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "Não foi possível ler a configuração atual do agente.",
           "disabled": "{agent} está desativado nas configurações de agentes. Ative-o antes de conectar.",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "O {agent} precisa que você entre novamente antes de executar este turno. Faça login nas Configurações e envie a mensagem de novo.",
           "agentAuthRequired": "O {agent} não conseguiu iniciar uma sessão: não tem credenciais utilizáveis. Inicia sessão de novo em Definições → Agentes → {agent} e reabre esta conversa.",
           "grokModelSwitchIncompatibleAgent": "{agent} não pode mudar para esse modelo em uma conversa existente. Inicie uma nova sessão para usá-lo.",
+          "setModeFailed": "{agent} não conseguiu mudar de modo.",
+          "setConfigOptionFailed": "{agent} não conseguiu aplicar essa configuração.",
+          "goalControlFailed": "{agent} não conseguiu atualizar o objetivo.",
+          "imageDropped": "{agent} não recebeu uma imagem anexada.",
+          "sessionLoadFallback": "{agent} não conseguiu restaurar a sessão anterior e iniciou uma nova; o contexto anterior não está mais disponível.",
           "turnFailedEmpty": "{agent} encerrou o turno sem produzir nenhuma resposta.",
           "turnFailedEmptyProtocol": "{agent} produziu uma saída que o codeg não conseguiu analisar — a versão do agente pode não corresponder ao protocolo.",
-          "turnFailedEmptyMetadata": "{agent} enviou apenas atualizações de status neste turno (plano / modo / uso) e nenhuma resposta.",
-          "detailsInAlerts": "Abra os alertas na barra de status e expanda os detalhes para ver a saída do agente."
+          "turnFailedEmptyMetadata": "{agent} enviou apenas atualizações de status neste turno (plano / modo / uso) e nenhuma resposta."
         },
         "unableReadAgentConfig": "Não foi possível ler a configuração do agente: {message}",
         "connectFailedTitle": "Falha na conexão de {agent}",
         "toolFallbackTitle": "Ferramenta",
-        "eventErrorTitle": "Erro do agente",
         "notificationTurnComplete": "{agent} terminou de responder",
         "notificationError": "{agent} erro: {message}",
         "notificationQuestion": "{agent} está aguardando sua resposta",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}, {delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "O {agent} definiu {option} como {actual} em vez de {requested}"
+        "configOptionAdjusted": "O {agent} definiu {option} como {actual} em vez de {requested}",
+        "noticeTitle": "{agent}: {title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "Reconectando…",
         "reconnectDisabledDuringTurn": "Disponível quando o turno atual terminar",
         "dismiss": "Dispensar",
-        "reconnectFailed": "Falha ao reconectar a sessão",
         "applied": "Nova configuração aplicada"
       },
       "piProjectTrust": {

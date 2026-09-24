@@ -178,6 +178,13 @@ pub enum SurfaceChoice {
     Window,
 }
 
+/// How every block the built-in browser hands a conversation opens (the
+/// renderers in `handoff` start with it). In the shared module because blocks
+/// are recognized by it in both runtimes: a remote workspace's server projects
+/// the prompts a desktop's browser sent (`acp::types::project_user_prompt_block`),
+/// and the transcript names a badge from it (`src/lib/browser/page-handoff-block.ts`).
+pub const HANDOFF_BLOCK_HEADER: &str = "Captured from a web page in the built-in browser";
+
 pub const STATE_EVENT: &str = "browser://state";
 pub const CLOSED_EVENT: &str = "browser://closed";
 pub const POPUP_EVENT: &str = "browser://popup";

@@ -1245,12 +1245,14 @@ pub fn get_agent_meta(agent_type: AgentType) -> AcpAgentMeta {
             //   turning notices on stops feeding codeg's existing
             //   `SessionFailure` banner; codex-acp says the same in its
             //   readme-dev ("notices take precedence over AIR advisory
-            //   records"). PAID: `sessionFailureFromNotice` mirrors
-            //   `warning`/`error` notices back into that table, so the banner
-            //   keeps its rows. Only ADVISORY-class records move — the real
-            //   failures that carry `retry`/`login` actions never went through
-            //   this lane (the extension doc: a `warning` "may still succeed
-            //   and normally has no actions"), so no button is lost.
+            //   records"). ACCEPTED: advisories become notifications (a
+            //   toast, kept in the alert list — `lib/session-notices.ts`);
+            //   mirroring them into the banner as well showed every one
+            //   twice. Only
+            //   ADVISORY-class records move — the real failures that carry
+            //   `retry`/`login` actions never went through this lane (the
+            //   extension doc: a `warning` "may still succeed and normally has
+            //   no actions"), so no button is lost.
             // * It DROPS `informational` frames at `level === "info"` outright
             //   (`if (message.level === "info") break;`). Those are plain
             //   transcript text today. ACCEPTED: upstream's reason is that
@@ -1906,8 +1908,10 @@ pub fn get_agent_meta(agent_type: AgentType) -> AcpAgentMeta {
             // trade, because their current channel is not a surface at all:
             // `modelRerouted` is a THOUGHT chunk today (it pollutes reasoning
             // with "Model rerouted from X to Y"), and a deprecation notice
-            // reaches a client only through AIR. The rest land in the banner
-            // mirror, same as claude's.
+            // reaches a client only through AIR. The rest become toasts, same
+            // as claude's — except codex's post-compaction "multiple
+            // compactions" warning, which the frontend drops because the
+            // compaction card already covers it.
             //
             // Compaction is where codex gains most. Its legacy call carries
             // none of the reserved fields (the card's full label was only ever

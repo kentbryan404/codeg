@@ -190,6 +190,8 @@
     "enableProxy": "System-Proxy aktivieren",
     "proxyAddress": "Proxy-Adresse",
     "proxyHint": "Unterstützt http(s)/socks5, Beispiel: {example}. Wirksam nur bei aktiviertem System-Proxy.",
+    "proxyBypass": "Proxy umgehen für",
+    "proxyBypassHint": "Mehrere Einträge werden durch Kommas ohne Leerzeichen getrennt, z. B. <code>{example}</code>. <code>example.com</code> gilt für diese Domain, <code>.example.com</code> für alle ihre Subdomains; IP-Adressen sind ebenfalls möglich. Lokale Adressen <code>localhost,127.0.0.1,::1</code> werden immer direkt verbunden und müssen nicht eingetragen werden. Die Liste wird als Umgebungsvariable NO_PROXY übernommen.",
     "save": "Speichern",
     "saving": "Wird gespeichert...",
     "proxyRequired": "Bei aktiviertem Proxy ist eine Proxy-URL erforderlich",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "Agenten-Einstellungen öffnen",
           "retry": "Erneut versuchen"
         },
-        "agentsSetupHint": "Öffnen Sie Einstellungen > Agenten, um die Installation zu verwalten.",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "Aktuelle Agenten-Konfiguration kann nicht gelesen werden.",
           "disabled": "{agent} ist in den Agenten-Einstellungen deaktiviert. Aktivieren Sie ihn vor dem Verbinden.",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "{agent} benötigt eine erneute Anmeldung, bevor diese Runde ausgeführt werden kann. Melde dich in den Einstellungen an und sende die Nachricht erneut.",
           "agentAuthRequired": "{agent} konnte keine Sitzung starten: Es sind keine verwendbaren Anmeldedaten vorhanden. Melde dich unter Einstellungen → Agenten → {agent} erneut an und öffne diese Unterhaltung neu.",
           "grokModelSwitchIncompatibleAgent": "{agent} kann in einer bestehenden Unterhaltung nicht zu diesem Modell wechseln. Starte eine neue Sitzung, um es zu verwenden.",
+          "setModeFailed": "{agent} konnte den Modus nicht wechseln.",
+          "setConfigOptionFailed": "{agent} konnte diese Einstellung nicht übernehmen.",
+          "goalControlFailed": "{agent} konnte das Ziel nicht aktualisieren.",
+          "imageDropped": "{agent} hat ein angehängtes Bild nicht erhalten.",
+          "sessionLoadFallback": "{agent} konnte die vorherige Sitzung nicht wiederherstellen und hat eine neue gestartet – der frühere Kontext ist nicht mehr vorhanden.",
           "turnFailedEmpty": "{agent} hat die Runde ohne jegliche Antwort beendet.",
           "turnFailedEmptyProtocol": "{agent} hat eine Ausgabe erzeugt, die codeg nicht auswerten konnte — die Agent-Version passt möglicherweise nicht zum Protokoll.",
-          "turnFailedEmptyMetadata": "{agent} hat in dieser Runde nur Statusaktualisierungen gesendet (Plan / Modus / Verbrauch) und keine Antwort.",
-          "detailsInAlerts": "Öffnen Sie die Warnungen in der Statusleiste und klappen Sie die Details auf, um die Ausgabe des Agents zu sehen."
+          "turnFailedEmptyMetadata": "{agent} hat in dieser Runde nur Statusaktualisierungen gesendet (Plan / Modus / Verbrauch) und keine Antwort."
         },
         "unableReadAgentConfig": "Agenten-Konfiguration kann nicht gelesen werden: {message}",
         "connectFailedTitle": "{agent} Verbindung fehlgeschlagen",
         "toolFallbackTitle": "Werkzeug",
-        "eventErrorTitle": "Agentenfehler",
         "notificationTurnComplete": "{agent} hat die Antwort abgeschlossen",
         "notificationError": "{agent} Fehler: {message}",
         "notificationQuestion": "{agent} wartet auf deine Antwort",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}, {delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "{agent} hat {option} auf {actual} statt {requested} gesetzt"
+        "configOptionAdjusted": "{agent} hat {option} auf {actual} statt {requested} gesetzt",
+        "noticeTitle": "{agent}: {title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "Wird neu verbunden…",
         "reconnectDisabledDuringTurn": "Verfügbar, sobald die aktuelle Runde abgeschlossen ist",
         "dismiss": "Schließen",
-        "reconnectFailed": "Sitzung konnte nicht neu verbunden werden",
         "applied": "Neue Konfiguration angewendet"
       },
       "piProjectTrust": {

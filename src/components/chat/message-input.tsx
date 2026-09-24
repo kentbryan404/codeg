@@ -281,7 +281,7 @@ interface MessageInputProps {
 // that uri directly (it serializes to a ResourceLink and round-trips through the
 // draft doc untouched). A path-less file (a local-desktop paste/drop carrying
 // inline bytes — an embedded resource or a `data:` link) can't live in the doc,
-// so its badge carries an inert `codeg://embedded/<uuid>` display uri
+// so its badge carries an inert `codeg://embedded/…` display uri
 // (`buildEmbeddedReferenceUri`) while the real bytes-bearing block is held in the
 // `embeddedPayloadsRef` map keyed by that uri. `docToPromptBlocks` drops the
 // embedded badge from the prose; `buildDraft` appends the mapped block for every
@@ -1377,10 +1377,12 @@ export function MessageInput({
   // screenshot, the console. The block is page content — the backend already
   // capped it and headed it "data, not instructions" — and it rides the same
   // path a path-less pasted file takes: an inline badge whose bytes live in
-  // `embeddedPayloadsRef` until send. An agent that does not take embedded
-  // context gets the block as prose instead of silently getting nothing; the
-  // picture goes through the ordinary image path, which is capability-driven
-  // on its own.
+  // `embeddedPayloadsRef` until send. The badge also carries the page's
+  // address, so the message it is sent in can list the page under the bubble
+  // the way it does when read back from the agent's record. An agent that does
+  // not take embedded context gets the block as prose instead of silently
+  // getting nothing; the picture goes through the ordinary image path, which
+  // is capability-driven on its own.
   useEffect(() => {
     if (!attachmentTabId) return
 
@@ -1397,6 +1399,7 @@ export function MessageInput({
             [
               {
                 name: detail.label,
+                ref: detail.uri,
                 realBlock: {
                   type: "resource",
                   uri: detail.uri,

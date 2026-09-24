@@ -190,6 +190,8 @@
     "enableProxy": "Activer le proxy système",
     "proxyAddress": "Adresse du proxy",
     "proxyHint": "Prend en charge http(s)/socks5, exemple : {example}. Actif uniquement lorsque le proxy système est activé.",
+    "proxyBypass": "Ne pas utiliser le proxy pour",
+    "proxyBypassHint": "Séparez les entrées par des virgules, sans espaces, par exemple <code>{example}</code>. <code>example.com</code> correspond à ce domaine et <code>.example.com</code> à tous ses sous-domaines ; les adresses IP sont également acceptées. Les adresses locales <code>localhost,127.0.0.1,::1</code> sont toujours jointes directement et n’ont pas besoin d’être ajoutées. La liste s’applique comme variable d’environnement NO_PROXY.",
     "save": "Enregistrer",
     "saving": "Enregistrement...",
     "proxyRequired": "L’URL du proxy est requise lorsque le proxy est activé",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "Ouvrir les paramètres des agents",
           "retry": "Réessayer"
         },
-        "agentsSetupHint": "Ouvrez Paramètres > Agents pour gérer l'installation.",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "Impossible de lire la configuration actuelle de l'agent.",
           "disabled": "{agent} est désactivé dans les paramètres des agents. Activez-le avant de vous connecter.",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "{agent} a besoin que vous vous reconnectiez avant de pouvoir exécuter ce tour. Connectez-vous depuis les Paramètres, puis renvoyez le message.",
           "agentAuthRequired": "{agent} n'a pas pu démarrer de session : aucun identifiant utilisable. Reconnecte-toi depuis Paramètres → Agents → {agent}, puis rouvre cette conversation.",
           "grokModelSwitchIncompatibleAgent": "{agent} ne peut pas basculer vers ce modèle dans une conversation existante. Démarrez une nouvelle session pour l'utiliser.",
+          "setModeFailed": "{agent} n'a pas pu changer de mode.",
+          "setConfigOptionFailed": "{agent} n'a pas pu appliquer ce réglage.",
+          "goalControlFailed": "{agent} n'a pas pu mettre à jour l'objectif.",
+          "imageDropped": "{agent} n'a pas reçu une image jointe.",
+          "sessionLoadFallback": "{agent} n'a pas pu restaurer la session précédente et en a démarré une nouvelle ; le contexte antérieur n'est plus disponible.",
           "turnFailedEmpty": "{agent} a terminé le tour sans produire de réponse.",
           "turnFailedEmptyProtocol": "{agent} a produit une sortie que codeg n'a pas pu analyser — la version de l'agent ne correspond peut-être pas au protocole.",
-          "turnFailedEmptyMetadata": "{agent} n'a envoyé que des mises à jour d'état ce tour-ci (plan / mode / utilisation) et aucune réponse.",
-          "detailsInAlerts": "Ouvrez les alertes de la barre d'état et développez les détails pour voir la sortie de l'agent."
+          "turnFailedEmptyMetadata": "{agent} n'a envoyé que des mises à jour d'état ce tour-ci (plan / mode / utilisation) et aucune réponse."
         },
         "unableReadAgentConfig": "Impossible de lire la configuration de l'agent : {message}",
         "connectFailedTitle": "Échec de la connexion de {agent}",
         "toolFallbackTitle": "Outil",
-        "eventErrorTitle": "Erreur de l'agent",
         "notificationTurnComplete": "{agent} a terminé de répondre",
         "notificationError": "{agent} erreur : {message}",
         "notificationQuestion": "{agent} attend votre réponse",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}, {delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "{agent} a réglé {option} sur {actual} au lieu de {requested}"
+        "configOptionAdjusted": "{agent} a réglé {option} sur {actual} au lieu de {requested}",
+        "noticeTitle": "{agent} : {title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "Reconnexion…",
         "reconnectDisabledDuringTurn": "Disponible une fois le tour en cours terminé",
         "dismiss": "Ignorer",
-        "reconnectFailed": "Échec de la reconnexion de la session",
         "applied": "Nouvelle configuration appliquée"
       },
       "piProjectTrust": {

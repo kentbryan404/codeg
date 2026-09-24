@@ -190,6 +190,8 @@
     "enableProxy": "تفعيل وكيل النظام",
     "proxyAddress": "عنوان الوكيل",
     "proxyHint": "يدعم http(s)/socks5، مثال: {example}. يعمل فقط عند تفعيل وكيل النظام.",
+    "proxyBypass": "تجاوز الوكيل لـ",
+    "proxyBypassHint": "افصل بين الإدخالات بفاصلة إنجليزية <code>,</code> دون مسافات، مثل <code>{example}</code>. يطابق <code>example.com</code> النطاق نفسه، ويطابق <code>.example.com</code> جميع نطاقاته الفرعية، ويمكن أيضًا إدخال عناوين IP. العناوين المحلية <code>localhost,127.0.0.1,::1</code> تتصل مباشرةً دائمًا ولا حاجة إلى إضافتها. تُطبَّق القائمة بوصفها متغير البيئة NO_PROXY.",
     "save": "حفظ",
     "saving": "جارٍ الحفظ...",
     "proxyRequired": "عنوان URL للوكيل مطلوب عند تفعيل الوكيل",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "فتح إعدادات الوكلاء",
           "retry": "إعادة المحاولة"
         },
-        "agentsSetupHint": "افتح الإعدادات > الوكلاء لإدارة التثبيت.",
-        "withSetupHint": "{message}\n{hint}",
         "blocked": {
           "missingConfig": "تعذر قراءة إعدادات الوكيل الحالية.",
           "disabled": "{agent} معطّل في إعدادات الوكلاء. قم بتمكينه قبل الاتصال.",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "يحتاج {agent} إلى تسجيل دخولك من جديد قبل تنفيذ هذه الجولة. سجّل الدخول من الإعدادات ثم أعد إرسال الرسالة.",
           "agentAuthRequired": "تعذّر على {agent} بدء جلسة: لا توجد بيانات اعتماد صالحة للاستخدام. سجّل الدخول من جديد عبر الإعدادات ← الوكلاء ← {agent}، ثم أعد فتح هذه المحادثة.",
           "grokModelSwitchIncompatibleAgent": "لا يمكن لـ {agent} التبديل إلى هذا النموذج في محادثة قائمة. ابدأ جلسة جديدة لاستخدامه.",
+          "setModeFailed": "تعذّر على {agent} تبديل الوضع.",
+          "setConfigOptionFailed": "تعذّر على {agent} تطبيق هذا الإعداد.",
+          "goalControlFailed": "تعذّر على {agent} تحديث الهدف.",
+          "imageDropped": "لم تصل إحدى الصور المرفقة إلى {agent}.",
+          "sessionLoadFallback": "تعذّر على {agent} استعادة الجلسة السابقة فبدأ جلسة جديدة، ولم يعد السياق السابق متاحًا.",
           "turnFailedEmpty": "أنهى {agent} الجولة دون إنتاج أي رد.",
           "turnFailedEmptyProtocol": "أنتج {agent} مخرجات تعذّر على codeg تحليلها — قد لا يتوافق إصدار الوكيل مع البروتوكول.",
-          "turnFailedEmptyMetadata": "أرسل {agent} تحديثات حالة فقط في هذه الجولة (الخطة / الوضع / الاستخدام) دون أي رد.",
-          "detailsInAlerts": "افتح التنبيهات في شريط الحالة ووسّع التفاصيل لعرض مخرجات الوكيل."
+          "turnFailedEmptyMetadata": "أرسل {agent} تحديثات حالة فقط في هذه الجولة (الخطة / الوضع / الاستخدام) دون أي رد."
         },
         "unableReadAgentConfig": "تعذر قراءة إعدادات الوكيل: {message}",
         "connectFailedTitle": "فشل اتصال {agent}",
         "toolFallbackTitle": "أداة",
-        "eventErrorTitle": "خطأ الوكيل",
         "notificationTurnComplete": "{agent} أنهى الاستجابة",
         "notificationError": "{agent} خطأ: {message}",
         "notificationQuestion": "{agent} ينتظر إجابتك",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}، {delay}",
           "httpStatus": " (HTTP {status})"
         },
-        "configOptionAdjusted": "ضبط {agent} {option} على {actual} بدلاً من {requested}"
+        "configOptionAdjusted": "ضبط {agent} {option} على {actual} بدلاً من {requested}",
+        "noticeTitle": "{agent}: {title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "جارٍ إعادة الاتصال…",
         "reconnectDisabledDuringTurn": "متاح بعد انتهاء الدور الحالي",
         "dismiss": "تجاهل",
-        "reconnectFailed": "فشل في إعادة الاتصال بالجلسة",
         "applied": "تم تطبيق الإعدادات الجديدة"
       },
       "piProjectTrust": {

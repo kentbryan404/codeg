@@ -190,6 +190,8 @@
     "enableProxy": "啟用系統代理",
     "proxyAddress": "代理位址",
     "proxyHint": "支援 http(s)/socks5，範例：{example}。僅在啟用系統代理時生效。",
+    "proxyBypass": "不經過代理的位址",
+    "proxyBypassHint": "多個位址以英文逗號 <code>,</code> 分隔，不加空格，例如 <code>{example}</code>。<code>example.com</code> 符合該網域，<code>.example.com</code> 符合其所有子網域，也可以填寫 IP 位址。本機位址 <code>localhost,127.0.0.1,::1</code> 一律直連，無須填寫。此清單會以環境變數 NO_PROXY 生效。",
     "save": "儲存",
     "saving": "儲存中...",
     "proxyRequired": "啟用代理時必須填寫代理位址",
@@ -2955,8 +2957,6 @@
           "openAgentsSettings": "打開 Agents 管理",
           "retry": "重試"
         },
-        "agentsSetupHint": "點擊前往設定 > Agents 管理安裝。",
-        "withSetupHint": "{message}\n提示：{hint}",
         "blocked": {
           "missingConfig": "無法讀取目前 Agent 設定。",
           "disabled": "{agent} 已在 Agents 管理中停用，請先啟用後再連線。",
@@ -2981,15 +2981,18 @@
           "turnFailedAuthRequired": "{agent} 需要你重新登入後才能執行本輪回覆。請在設定中登入，然後重新傳送這則訊息。",
           "agentAuthRequired": "{agent} 無法建立工作階段：沒有可用的登入憑證。請在 設定 → 智能體 → {agent} 中重新登入，然後重新開啟此對話。",
           "grokModelSwitchIncompatibleAgent": "{agent} 無法在既有對話中切換到該模型，請新建工作階段以使用它。",
+          "setModeFailed": "{agent} 切換模式失敗。",
+          "setConfigOptionFailed": "{agent} 未能套用該設定。",
+          "goalControlFailed": "{agent} 未能更新目標。",
+          "imageDropped": "{agent} 沒有收到一張附加的圖片。",
+          "sessionLoadFallback": "{agent} 無法還原先前的會話，已改為開始新會話，先前的上下文不再可用。",
           "turnFailedEmpty": "{agent} 此輪沒有產生任何回覆就結束了。",
           "turnFailedEmptyProtocol": "{agent} 此輪的輸出 codeg 無法解析，可能是代理版本與協定不相符。",
-          "turnFailedEmptyMetadata": "{agent} 此輪只收到狀態更新（計畫 / 模式 / 用量），沒有收到任何回覆。",
-          "detailsInAlerts": "在狀態列的「警示」中展開詳情，即可查看代理輸出。"
+          "turnFailedEmptyMetadata": "{agent} 此輪只收到狀態更新（計畫 / 模式 / 用量），沒有收到任何回覆。"
         },
         "unableReadAgentConfig": "無法讀取 Agent 設定：{message}",
         "connectFailedTitle": "{agent} 連線失敗",
         "toolFallbackTitle": "工具",
-        "eventErrorTitle": "Agent 錯誤",
         "notificationTurnComplete": "{agent} 已完成回應",
         "notificationError": "{agent} 錯誤：{message}",
         "notificationQuestion": "{agent} 正在等你回答",
@@ -3006,7 +3009,8 @@
           "lineNoErrorWithDelay": "{retry}，{delay}",
           "httpStatus": "（HTTP {status}）"
         },
-        "configOptionAdjusted": "{agent} 把{option}設成了 {actual}，而不是 {requested}"
+        "configOptionAdjusted": "{agent} 把{option}設成了 {actual}，而不是 {requested}",
+        "noticeTitle": "{agent}：{title}"
       },
       "connectionLifecycle": {
         "tasks": {
@@ -3731,7 +3735,6 @@
         "reconnecting": "正在重新連線…",
         "reconnectDisabledDuringTurn": "目前回合結束後可重新連線",
         "dismiss": "忽略",
-        "reconnectFailed": "重新連線工作階段失敗",
         "applied": "已套用新設定"
       },
       "piProjectTrust": {
