@@ -122,7 +122,6 @@ import {
   type QuestionAnswer,
   type UserMessageBlock,
 } from "@/lib/types"
-import { useRouter } from "next/navigation"
 import {
   lastUserPromptText,
   type SessionFailureAction,
@@ -1954,9 +1953,10 @@ const ConversationTabView = memo(function ConversationTabView({
   // prompt through the message queue — same mechanism as the live-feedback
   // resend fallback: enqueue survives the turn-end status race and flushes as
   // soon as the connection can take a prompt, so the retry is never silently
-  // dropped. `login` lands on the agents settings page (auth lives there);
-  // `new_session` reuses the load-error banner's fresh-draft path.
-  const router = useRouter()
+  // dropped. `login` opens the settings window on this agent's page (auth
+  // lives there) — a `router.push` would swap the workspace itself for the
+  // settings route; `new_session` reuses the load-error banner's fresh-draft
+  // path.
   const tSessionFailure = useTranslations("Folder.chat.sessionFailure")
   const detailTurns = detail?.turns
   const handleSessionFailureAction = useCallback(
@@ -1987,7 +1987,7 @@ const ConversationTabView = memo(function ConversationTabView({
           break
         }
         case "login":
-          router.push("/settings/agents")
+          handleOpenAgentsSettings()
           break
         case "new_session":
           handleOpenNewSession()
@@ -1999,7 +1999,7 @@ const ConversationTabView = memo(function ConversationTabView({
       detailTurns,
       mqEnqueue,
       selectedModeId,
-      router,
+      handleOpenAgentsSettings,
       handleOpenNewSession,
       tSessionFailure,
     ]
