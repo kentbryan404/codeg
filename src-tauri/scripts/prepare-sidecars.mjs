@@ -87,22 +87,31 @@ function main() {
   log(
     `target triple: ${target}${crossCompile ? "" : " (host — sharing target/release)"}`
   )
-  log(`building ${BIN_NAME} (--release --no-default-features)`)
 
   // cargo build needs to run from src-tauri so it resolves the local manifest
   // and shares the swatinem/rust-cache key with other cargo invocations.
   // `--no-default-features` keeps codeg-mcp free of the Tauri runtime deps —
   // the bin's required-features is empty, so this just enables cross-compile
   // without dragging in macOS-private-api / Linux WebKit / Windows WebView2.
-  const cargoArgs = [
-    "build",
-    "--release",
-    "--bin",
-    BIN_NAME,
-    "--no-default-features",
-  ]
-  if (crossCompile) cargoArgs.push("--target", target)
+  const cargoArgs = ["build", "--release", "--bin", BIN_NAME]
+  if (crossCompile) {
+    // Cross build: keep the sidecar free of the Tauri runtime so it compiles
+    // without the target's WebKit/WebView2 stack. This is a SEPARATE feature
+    // set from the host `tauri build`, so it compiles codeg_lib on its own —
+    // unavoidable, and the CI path stages this sidecar before the bundle and
+    // skips the beforeBuildCommand pass anyway.
+    cargoArgs.push("--no-default-features", "--target", target)
+  } else {
+    // Host build: match the `tauri build` feature set exactly (default features
+    // + tauri/custom-protocol) so codeg_lib is compiled ONCE and shared with the
+    // main binary instead of a second time under --no-default-features. The
+    // staged sidecar links the Tauri glue as a result; it is larger but the
+    // packaging build drops the duplicate lib compile.
+    cargoArgs.push("--features", "tauri/custom-protocol")
+  }
 
+  // Log the real cargo args (the host and cross paths differ in features).
+  log(`cargo ${cargoArgs.join(" ")}`)
   execFileSync("cargo", cargoArgs, { stdio: "inherit", cwd: SRC_TAURI })
 
   const built = join(

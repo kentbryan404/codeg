@@ -14,7 +14,7 @@
 #          └─ node src-tauri/scripts/before-build.mjs
 #               ├─ pnpm build                 前端静态导出 → out/（bundle.resources 依赖）
 #               └─ pnpm tauri:prepare-sidecars  codeg-mcp sidecar 的 release 编译
-#            两步互不依赖，并发执行；任一步失败即中止（设 CODEG_SERIAL_BEFORE_BUILD=1 可改回串行）。
+#            先前端后 sidecar，串行（host 下 sidecar 编译期要读 out/）；任一步失败即中止。
 #       然后 cargo 编译桌面端并按 --bundles 打包。
 # Linux 上完成后，把生成的 .deb 另复制一份到仓库根目录（见脚本末尾）。
 #
@@ -66,9 +66,10 @@ if [ -z "${CODEG_NO_SCCACHE:-}" ] && [ -z "${RUSTC_WRAPPER:-}" ] &&
   echo "[build] 启用 sccache 编译缓存"
 fi
 
-if [ ! -d node_modules ]; then
+# node_modules 在仓库根（本脚本开头已 cd 到 src-tauri），故查 ../ 并回根目录装。
+if [ ! -d ../node_modules ]; then
   echo "[build] node_modules 不存在，执行 pnpm install"
-  pnpm install --frozen-lockfile
+  (cd .. && pnpm install --frozen-lockfile)
 fi
 
 # 用户未显式指定 --bundles 时，按当前平台选一个能直接跑通的原生产物。
@@ -118,7 +119,9 @@ if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && ! $has_config; then
 fi
 
 echo "[build] pnpm tauri ${ARGS[*]} ${USER_ARGS[*]:-}"
+_build_t0=$SECONDS
 pnpm tauri "${ARGS[@]}" ${USER_ARGS[@]+"${USER_ARGS[@]}"}
+echo "[build] tauri build 耗时 $((SECONDS - _build_t0))s"
 
 echo
 echo "[build] 完成，产物位于 src-tauri/target/release/bundle（脚本此处 cwd 已是 src-tauri）："

@@ -6,20 +6,20 @@
 // cargo build, so everything it needs must be ready when this exits:
 //   * `pnpm build`                  — Next static export → out/ (bundle.resources)
 //   * `pnpm tauri:prepare-sidecars` — codeg-mcp release sidecar → binaries/
+//   * `pnpm typecheck`              — started after the frontend, run in parallel
+//                                     with the sidecar compile (the frontend
+//                                     skips its own copy via CODEG_PARALLEL_TSC)
 //
-// They use different toolchains and write different trees, so run them at the
-// same time: on a cold build that overlaps the frontend export with the sidecar
-// compile and saves ~min(frontend, sidecar) of wall clock. Both must succeed —
-// a failure in either fails this hook, so Tauri never starts against a partial
-// out/ or a missing sidecar.
-//
-// Set CODEG_SERIAL_BEFORE_BUILD=1 to force the old back-to-back order (debugging
-// a failure, or a low-core machine where the two compete too hard for CPU).
+// The first two run back to back, frontend first: on a host build the sidecar
+// compiles codeg_lib with the Tauri runtime on (see prepare-sidecars.mjs), so
+// its `tauri::generate_context!()` reads `../out` at compile time and must not
+// race the frontend export. Every step must succeed — a failure in any fails
+// this hook, so Tauri never starts against a partial out/ or a missing sidecar.
 //
 // Node-only on purpose: runs identically on macOS, Linux and Windows CI, unlike
-// a shell `&`/`wait` (which would need a POSIX shell and would not survive the
-// Windows runner). It does NOT run `prepare-sidecars` itself — that script
-// already handles the cross-compile `--target` / `TAURI_TARGET_TRIPLE` cases.
+// a shell that would need a POSIX shell on the Windows runner. It does NOT run
+// `prepare-sidecars` itself — that script already handles the cross-compile
+// `--target` / `TAURI_TARGET_TRIPLE` cases.
 
 import { spawn } from "node:child_process"
 import { dirname, resolve } from "node:path"
@@ -30,15 +30,18 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(HERE, "..", "..") // repo root, one level above src-tauri/
 
 const STEPS = [
-  { name: "frontend", args: ["build"] },
+  // The frontend skips its own type check (CODEG_PARALLEL_TSC) because
+  // `pnpm typecheck` runs it separately alongside the sidecar compile below.
+  { name: "frontend", args: ["build"], env: { CODEG_PARALLEL_TSC: "1" } },
   { name: "sidecar", args: ["tauri:prepare-sidecars"] },
 ]
 
-function run(step) {
+function run(step, extraEnv) {
   return new Promise((settle) => {
     const child = spawn("pnpm", step.args, {
       cwd: ROOT,
       stdio: "inherit",
+      env: extraEnv ? { ...process.env, ...extraEnv } : process.env,
       // pnpm is pnpm.cmd on Windows; without a shell the spawn is ENOENT.
       shell: process.platform === "win32",
     })
@@ -53,23 +56,52 @@ function run(step) {
 }
 
 async function main() {
-  // `pnpm <script>` for each step; a non-zero exit is fatal.
-  if (process.env.CODEG_SERIAL_BEFORE_BUILD === "1") {
-    for (const step of STEPS) {
-      const code = await run(step)
-      if (code !== 0) process.exit(code)
+  // Order matters: `pnpm build` must finish first. The sidecar compiles
+  // codeg_lib with the Tauri runtime on (see prepare-sidecars.mjs), so its
+  // `tauri::generate_context!()` reads `../out` at compile time — running it
+  // while the frontend export is still rewriting `out/` fails on a missing
+  // asset. They cannot overlap; run them back to back.
+  const started = Date.now()
+  let typecheck = null
+  for (const step of STEPS) {
+    const t0 = Date.now()
+    const code = await run(step, step.env)
+    const secs = ((Date.now() - t0) / 1000).toFixed(1)
+    if (code !== 0) {
+      console.error(
+        `[before-build] ${step.name} failed (exit ${code}) after ${secs}s`
+      )
+      process.exit(code)
     }
-    return
+    console.log(`[before-build] ${step.name} done in ${secs}s`)
+    // The frontend skipped its in-build type check, so start it now and let it
+    // run alongside the (much longer) sidecar compile. Same tsconfig, same
+    // verdict — a non-zero exit still fails this hook.
+    if (step.name === "frontend") {
+      const tcStart = Date.now()
+      typecheck = {
+        code: run({ name: "typecheck", args: ["typecheck"] }).then((code) => ({
+          code,
+          // tsc's own runtime, not the time we waited for it (it overlaps
+          // the sidecar compile, so the wait is longer than the work).
+          secs: (Date.now() - tcStart) / 1000,
+        })),
+      }
+    }
   }
-
-  const codes = await Promise.all(STEPS.map(run))
-  const failedAt = codes.findIndex((code) => code !== 0)
-  if (failedAt !== -1) {
-    console.error(
-      `[before-build] ${STEPS[failedAt].name} failed (exit ${codes[failedAt]})`
-    )
-    process.exit(codes[failedAt])
+  if (typecheck) {
+    const { code, secs } = await typecheck.code
+    if (code !== 0) {
+      console.error(
+        `[before-build] typecheck failed (exit ${code}) after ${secs.toFixed(1)}s`
+      )
+      process.exit(code)
+    }
+    console.log(`[before-build] typecheck done in ${secs.toFixed(1)}s`)
   }
+  console.log(
+    `[before-build] total ${((Date.now() - started) / 1000).toFixed(1)}s`
+  )
 }
 
 main()

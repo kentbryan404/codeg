@@ -258,3 +258,12 @@ tokio = { version = "1", features = ["test-util", "macros", "rt", "sync", "time"
 insta = { version = "1", features = ["json", "redactions"] }
 axum-test = { version = "17", features = ["ws"] }
 
+# Distribution profile. Cargo's defaults already give opt-level=3 / lto=false /
+# codegen-units=16; the one change here is stripping the symbol table. tauri
+# otherwise leaves it in (it passes `-C strip=debuginfo`), and on the ~132 MB
+# release binary that is ~35 MB (-25%) of dead weight in the installer and on
+# disk. Set CARGO_PROFILE_RELEASE_STRIP=false when you want symbols for a
+# backtrace session.
+[profile.release]
+strip = true
+
