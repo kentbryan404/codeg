@@ -2190,6 +2190,52 @@
         "changes": "Changements",
         "commits": "Validations"
       },
+      "thinking": {
+        "tabLabel": "Réflexion",
+        "count": "{count, plural, one {# réflexion} other {# réflexions}}",
+        "empty": "Pas encore de réflexion",
+        "jumpToLatest": "Aller au plus récent",
+        "expandAll": "Tout développer",
+        "collapseAll": "Tout replier",
+"discipline": {
+  "title": "Discipline des règles",
+  "global": "Global",
+  "project": "Projet",
+  "system": "Système",
+  "none": "Aucun fichier de règles actif"
+},
+"creed": {
+          "title": "Credo de réflexion",
+          "hint": "Préfixé à chaque prompt pour tous les agents, lu avant chaque étape de réflexion.",
+          "placeholder": "ex. Réfléchis en chinois ; conclusion d'abord, preuves ensuite…"
+        },
+        "metrics": {
+          "groupContext": "Contexte",
+          "groupCache": "Cache",
+          "groupInference": "Inférence",
+          "groupTools": "Outils",
+          "groupTiming": "Temps",
+          "model": "Modèle",
+          "thinkingOfReply": "Part de réflexion",
+          "duration": "Durée",
+          "throughput": "Débit",
+          "toolCalls": "Appels d'outils",
+          "toolFailures": "Échecs d'outils",
+          "startedAt": "Début",
+          "completedAt": "Fin",
+          "unavailable": "Non collecté",
+          "approx": "est."
+        },
+        "memory": {
+          "title": "Mémoire",
+          "count": "{count, plural, one {# entrée} other {# entrées}}",
+          "empty": "Pas encore de mémoire"
+        },
+        "rules": {
+          "label": "Règles actives",
+          "hint": "Le fichier de règles en vigueur pour cette session — cliquez pour l'ouvrir"
+        }
+      },
       "noFolderTitle": "Aucun dossier ouvert",
       "noFolderHint": "Ouvrez un dossier pour voir son contenu ici"
     },

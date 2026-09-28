@@ -40,6 +40,7 @@ pub mod paths;
 pub mod preferences;
 pub mod process;
 mod terminal;
+pub mod thinking_creed;
 pub mod turn_timings;
 pub mod update;
 pub mod web;
@@ -574,6 +575,9 @@ mod tauri_app {
             .manage(crate::update::new_update_state_handle())
             .setup(|app| {
                 let app_data_dir = app.path().app_data_dir()?;
+                // Startup phase timer: logged at the window handoff below so the
+                // pre-window cost is measurable from the app log.
+                let boot_timer = std::time::Instant::now();
 
                 // Unify the data root across every consumer:
                 //   * SQLite database (initialised below)
@@ -676,6 +680,8 @@ mod tauri_app {
                 // Load saved appearance settings before any window is created.
                 tauri::async_runtime::block_on(windows::load_saved_zoom(&db.conn));
                 tauri::async_runtime::block_on(windows::load_saved_appearance_mode(&db.conn));
+                // 思考信条的水合缓存：出站注入是同步热路径，必须在这里先读一次。
+                tauri::async_runtime::block_on(crate::thinking_creed::load_saved(&db.conn)).ok();
 
                 // System tray: required for the WeChat-style hide-on-close
                 // flow on Windows/Linux (no built-in dock to bring the
@@ -1049,6 +1055,76 @@ mod tauri_app {
                     ));
                 }
 
+                // ── Main window, built HERE on purpose ─────────────────────────
+                // Everything below (web-service auto-start, idle sweeps, the
+                // automation + work-task engines) is spawn-only or incidental to
+                // the window, and used to run BEFORE it — so the app showed no
+                // window until all of it finished. Hoisted above them: the
+                // window appears as soon as the DB, appearance and delegation
+                // stack are ready, and the rest finishes while the webview is
+                // already loading. All `app.manage` calls precede this point, so
+                // any command the frontend invokes on first paint has its state.
+                let startup_urls: Vec<String> = {
+                    use tauri_plugin_deep_link::DeepLinkExt;
+                    app.deep_link()
+                        .get_current()
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|url| url.to_string())
+                        .collect()
+                };
+                let workspace_path = tauri::async_runtime::block_on(
+                    crate::deep_link::startup_workspace_path(
+                        &db::AppDatabase {
+                            conn: app.state::<db::AppDatabase>().conn.clone(),
+                        },
+                        &startup_urls,
+                    ),
+                );
+
+                // Before any inspectable webview exists: web inspectors in
+                // this app open in a window of their own instead of docking
+                // into the window they are inspecting, which for a browser
+                // tab would be the whole workspace. Here rather than at the
+                // menu item that opens one, because a page can be
+                // right-clicked into "Inspect Element" without going through
+                // any of our code.
+                #[cfg(target_os = "macos")]
+                crate::browser::shim::macos::prefer_detached_inspector();
+
+                // Single-window workspace: ensure the main window exists.
+                // Workspace state (open folders, opened tabs, active tab) is
+                // restored by the frontend via `list_open_folder_details` /
+                // `list_opened_tabs` inside the main window.
+                if app.get_webview_window("main").is_none() {
+                    let url = tauri::WebviewUrl::App(workspace_path.into());
+                    let builder = tauri::WebviewWindowBuilder::new(app, "main", url)
+                        .title("Codeg")
+                        .inner_size(1260.0, 860.0)
+                        .min_inner_size(400.0, 600.0);
+                    let builder = windows::apply_platform_window_style(builder);
+                    // The workspace title bar is taller than the shared default
+                    // (it hosts the tab strips), so nudge the native macOS
+                    // traffic lights down to stay vertically centred.
+                    #[cfg(target_os = "macos")]
+                    let builder = builder.traffic_light_position(
+                        windows::workspace_window_traffic_light_position(),
+                    );
+                    if let Ok(w) = builder.build() {
+                        windows::post_window_setup(&w);
+                    }
+                }
+
+                tracing::info!(
+                    "[startup] main window handed off after {:?} (DB → appearance → delegation → window)",
+                    boot_timer.elapsed()
+                );
+
+                // Web-service auto-start runs AFTER the window now: starting
+                // the Axum server was a `block_on` on the setup thread, and
+                // nothing about the window needs it up first.
                 match tauri::async_runtime::block_on(web::load_web_service_config(&db.conn)) {
                     Ok(config) if config.auto_start => {
                         let port = config.port.unwrap_or(web::DEFAULT_WEB_SERVICE_PORT);
@@ -1128,14 +1204,13 @@ mod tauri_app {
                     tauri::async_runtime::spawn(crate::work_task::run_task_engine(engine));
                 }
 
-                // OS `codeg://` URLs. Register the listener after the DB is
-                // live so a warm-start click can look the conversation up.
-                // Cold-start URLs are also read here and baked into the main
-                // window path — an event emitted before the webview subscribes
-                // would be dropped, but `DeepLinkBootstrap` reads the query.
-                // macOS delivers its launch URL only after this hook returns,
-                // so that path lands on the listener below and is parked for
-                // `take_pending_deep_link` instead.
+                // OS `codeg://` URLs. The main window — and its cold-start URL —
+                // is built earlier, above; this only registers the WARM-start
+                // listener, after the DB is live so a click can look the
+                // conversation up. macOS delivers its launch URL only after the
+                // deep-link hook returns, so that path lands here and is parked
+                // for `take_pending_deep_link`; `DeepLinkBootstrap` reads the
+                // query the window was opened with.
                 {
                     use tauri_plugin_deep_link::DeepLinkExt;
                     let handle = app.handle().clone();
@@ -1159,59 +1234,6 @@ mod tauri_app {
                         tracing::warn!("[deep-link] scheme registration failed: {e}");
                     }
                 }
-                let startup_urls: Vec<String> = {
-                    use tauri_plugin_deep_link::DeepLinkExt;
-                    app.deep_link()
-                        .get_current()
-                        .ok()
-                        .flatten()
-                        .unwrap_or_default()
-                        .into_iter()
-                        .map(|url| url.to_string())
-                        .collect()
-                };
-                let workspace_path = tauri::async_runtime::block_on(
-                    crate::deep_link::startup_workspace_path(
-                        &db::AppDatabase {
-                            conn: app.state::<db::AppDatabase>().conn.clone(),
-                        },
-                        &startup_urls,
-                    ),
-                );
-
-                // Before any inspectable webview exists: web inspectors in
-                // this app open in a window of their own instead of docking
-                // into the window they are inspecting, which for a browser
-                // tab would be the whole workspace. Here rather than at the
-                // menu item that opens one, because a page can be
-                // right-clicked into "Inspect Element" without going through
-                // any of our code.
-                #[cfg(target_os = "macos")]
-                crate::browser::shim::macos::prefer_detached_inspector();
-
-                // Single-window workspace: ensure the main window exists.
-                // Workspace state (open folders, opened tabs, active tab) is
-                // restored by the frontend via `list_open_folder_details` /
-                // `list_opened_tabs` inside the main window.
-                if app.get_webview_window("main").is_none() {
-                    let url = tauri::WebviewUrl::App(workspace_path.into());
-                    let builder = tauri::WebviewWindowBuilder::new(app, "main", url)
-                        .title("Codeg")
-                        .inner_size(1260.0, 860.0)
-                        .min_inner_size(400.0, 600.0);
-                    let builder = windows::apply_platform_window_style(builder);
-                    // The workspace title bar is taller than the shared default
-                    // (it hosts the tab strips), so nudge the native macOS
-                    // traffic lights down to stay vertically centred.
-                    #[cfg(target_os = "macos")]
-                    let builder = builder.traffic_light_position(
-                        windows::workspace_window_traffic_light_position(),
-                    );
-                    if let Ok(w) = builder.build() {
-                        windows::post_window_setup(&w);
-                    }
-                }
-
                 #[cfg(all(
                     feature = "browser-child",
                     any(target_os = "macos", target_os = "windows")

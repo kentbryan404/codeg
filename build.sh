@@ -11,7 +11,7 @@
 #
 set -euo pipefail
 cd "$(dirname "$0")"
-
+rm -rf  ./dist/*
 # 本机 cargo 编译加速（mold/lld + sccache）：与 src-tauri 的 dev/build 入口共用同一份。
 . src-tauri/scripts/cargo-accelerators.sh
 

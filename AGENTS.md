@@ -36,6 +36,10 @@ cargo check
 cargo test --features test-utils
 cargo clippy --all-targets --features test-utils -- -D warnings
 
+# 只跑某个单元测试时加 `--lib`：不加会连带编译并链接 tests/ 下约 20 个集成测试
+# 二进制，单次约 2m22s；加 `--lib` 只重编 lib 测试目标，约 22s。
+cargo test --features test-utils --lib <filter>
+
 # codeg-mcp 协作伴生进程（多智能体委托）
 cargo check --no-default-features --bin codeg-mcp
 cargo clippy --no-default-features --bin codeg-mcp -- -D warnings

@@ -6275,8 +6275,11 @@ async fn run_connection(
                             // is consumed and forwarded by run_conversation_loop.
 
                             record_transcript_header(agent_type, &sid, &cwd.to_string_lossy());
+                            // Only the EARLY-READY arm above may have announced
+                            // this session; this arm returns right after, so
+                            // there is nothing to record here — updating
+                            // `announced_sid` would be a dead store.
                             if announced_sid.as_deref() != Some(sid.as_str()) {
-                                announced_sid = Some(sid.clone());
                                 emit_with_state(
                                     &state,
                                     &emitter_clone,
@@ -6546,8 +6549,10 @@ async fn run_connection(
                             tracing::info!("[ACP] Drained {drained} historical replay notifications");
                         }
 
+                        // Same as the resume arm: only the early-ready path can
+                        // have announced this id, and this arm returns below, so
+                        // no store is needed — updating would be dead.
                         if announced_sid.as_deref() != Some(sid.as_str()) {
-                            announced_sid = Some(sid.clone());
                             emit_with_state(
                                 &state,
                                 &emitter_clone,
@@ -9202,11 +9207,20 @@ pub(crate) fn map_prompt_blocks(blocks: Vec<PromptInputBlock>) -> Vec<ContentBlo
 /// companion's delegation group — that flag is the only gate, and it is already
 /// the injection gate's own verdict (`supports_mcp` + `agent_delivers_wire_mcp`
 /// + the delegation feature being on).
+///
+/// The user's Thinking Creed (when set) is prepended HERE, next to the routing
+/// block: both are machine-added content that must reach the model without
+/// entering the user's message, its preview, the ledger, or the cross-client
+/// broadcast. Reading it is a cached global (see `crate::thinking_creed`), so
+/// this hot path stays synchronous.
 fn prepare_agent_bound_prompt(
     agent_type: AgentType,
     mut blocks: Vec<PromptInputBlock>,
     delegation_enabled: bool,
 ) -> Vec<ContentBlock> {
+    if let Some(creed) = crate::thinking_creed::creed_block() {
+        blocks.insert(0, PromptInputBlock::Text { text: creed });
+    }
     append_agent_routes(&mut blocks, delegation_enabled);
     if agent_type == AgentType::Grok {
         blocks = normalize_grok_image_blocks(blocks);

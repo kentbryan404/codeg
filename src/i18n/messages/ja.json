@@ -2190,6 +2190,52 @@
         "changes": "変更",
         "commits": "コミット"
       },
+      "thinking": {
+        "tabLabel": "思考",
+        "count": "{count, plural, other {# 件の思考}}",
+        "empty": "まだ思考はありません",
+        "jumpToLatest": "最新へ",
+        "expandAll": "すべて展開",
+        "collapseAll": "すべて折りたたむ",
+"discipline": {
+  "title": "ルール規律",
+  "global": "グローバル",
+  "project": "プロジェクト",
+  "system": "システム",
+  "none": "有効なルールファイルなし"
+},
+"creed": {
+          "title": "思考の信条",
+          "hint": "毎ターンのプロンプト先頭に付加され、すべてのエージェントが思考前に読みます。",
+          "placeholder": "例：日本語で思考する。結論を先に、根拠を後に…"
+        },
+        "metrics": {
+          "groupContext": "コンテキスト",
+          "groupCache": "キャッシュ",
+          "groupInference": "推論",
+          "groupTools": "ツール",
+          "groupTiming": "時刻",
+          "model": "モデル",
+          "thinkingOfReply": "思考比率",
+          "duration": "所要時間",
+          "throughput": "スループット",
+          "toolCalls": "ツール呼び出し",
+          "toolFailures": "ツール失敗",
+          "startedAt": "開始",
+          "completedAt": "完了",
+          "unavailable": "未取得",
+          "approx": "概算"
+        },
+        "memory": {
+          "title": "メモリ",
+          "count": "{count, plural, other {# 件}}",
+          "empty": "まだ記憶がありません"
+        },
+        "rules": {
+          "label": "適用中のルール",
+          "hint": "このセッションで有効なルールファイル。クリックで開きます"
+        }
+      },
       "noFolderTitle": "開いているフォルダがありません",
       "noFolderHint": "フォルダを開くとここに表示されます"
     },

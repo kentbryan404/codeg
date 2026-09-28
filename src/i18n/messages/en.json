@@ -2190,6 +2190,52 @@
         "changes": "Changes",
         "commits": "Commits"
       },
+      "thinking": {
+        "tabLabel": "Thinking",
+        "count": "{count, plural, one {# thought} other {# thoughts}}",
+        "empty": "No thinking yet",
+        "jumpToLatest": "Jump to latest",
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all",
+"discipline": {
+  "title": "Rules discipline",
+  "global": "Global",
+  "project": "Project",
+  "system": "System",
+  "none": "No effective rules file"
+},
+"creed": {
+          "title": "Thinking Creed",
+          "hint": "Prepended to every prompt for every agent, so the model reads it before each thinking step.",
+          "placeholder": "e.g. Think in Chinese; state the conclusion first, then the evidence…"
+        },
+        "metrics": {
+          "groupContext": "Context",
+          "groupCache": "Cache",
+          "groupInference": "Inference",
+          "groupTools": "Tools",
+          "groupTiming": "Timing",
+          "model": "Model",
+          "thinkingOfReply": "Thinking share",
+          "duration": "Duration",
+          "throughput": "Throughput",
+          "toolCalls": "Tool calls",
+          "toolFailures": "Tool failures",
+          "startedAt": "Started",
+          "completedAt": "Completed",
+          "unavailable": "Not collected",
+          "approx": "est."
+        },
+        "memory": {
+          "title": "Memory",
+          "count": "{count, plural, one {# entry} other {# entries}}",
+          "empty": "Nothing remembered yet"
+        },
+        "rules": {
+          "label": "Active rules",
+          "hint": "The rules file in effect for this session — click to open"
+        }
+      },
       "noFolderTitle": "No folder open",
       "noFolderHint": "Open a folder to see its contents here"
     },

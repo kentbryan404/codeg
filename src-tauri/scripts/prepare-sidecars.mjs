@@ -110,7 +110,13 @@ function main() {
   // `--no-default-features` keeps codeg-mcp free of the Tauri runtime deps —
   // the bin's required-features is empty, so this just enables cross-compile
   // without dragging in macOS-private-api / Linux WebKit / Windows WebView2.
-  const cargoArgs = ["build", "--release", "--bin", BIN_NAME]
+  // Dev runs the sidecar from a DEBUG build: the release profile recompiles the
+  // whole codeg lib (minutes), while dev only needs a working local MCP process
+  // and the debug artifacts are shared with the `tauri dev` build. Release (the
+  // default, and what CI/packaging uses) stays unchanged.
+  const debugProfile = process.env.CODEG_SIDECAR_PROFILE === "debug"
+  const cargoArgs = ["build", "--bin", BIN_NAME]
+  if (!debugProfile) cargoArgs.push("--release")
   if (crossCompile) {
     // Cross build: keep the sidecar free of the Tauri runtime so it compiles
     // without the target's WebKit/WebView2 stack. This is a SEPARATE feature
@@ -135,7 +141,7 @@ function main() {
     SRC_TAURI,
     "target",
     ...(crossCompile ? [target] : []),
-    "release",
+    debugProfile ? "debug" : "release",
     `${BIN_NAME}${ext}`
   )
   if (!existsSync(built)) {

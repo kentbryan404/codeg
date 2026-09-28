@@ -52,7 +52,9 @@ const STAGE_LABEL = {
 function stageMarker(index, label) {
   const filled = "█".repeat(index)
   const empty = "░".repeat(STAGE_TOTAL - index)
-  console.log(`\n[before-build] [${filled}${empty}] ${index}/${STAGE_TOTAL} ${label}`)
+  console.log(
+    `\n[before-build] [${filled}${empty}] ${index}/${STAGE_TOTAL} ${label}`
+  )
 }
 
 function run(step, extraEnv) {

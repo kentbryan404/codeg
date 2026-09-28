@@ -2190,6 +2190,52 @@
         "changes": "변경사항",
         "commits": "커밋"
       },
+      "thinking": {
+        "tabLabel": "사고",
+        "count": "{count, plural, other {#개 사고}}",
+        "empty": "아직 사고 내용이 없습니다",
+        "jumpToLatest": "최신으로",
+        "expandAll": "모두 펼치기",
+        "collapseAll": "모두 접기",
+"discipline": {
+  "title": "규칙 규율",
+  "global": "전역",
+  "project": "프로젝트",
+  "system": "시스템",
+  "none": "적용되는 규칙 파일 없음"
+},
+"creed": {
+          "title": "사고 신조",
+          "hint": "모든 프롬프트 맨 앞에 붙어 모든 에이전트가 사고 전에 읽습니다.",
+          "placeholder": "예: 한국어로 사고하기; 결론 먼저, 근거는 그다음…"
+        },
+        "metrics": {
+          "groupContext": "컨텍스트",
+          "groupCache": "캐시",
+          "groupInference": "추론",
+          "groupTools": "도구",
+          "groupTiming": "시간",
+          "model": "모델",
+          "thinkingOfReply": "사고 비율",
+          "duration": "소요 시간",
+          "throughput": "처리량",
+          "toolCalls": "도구 호출",
+          "toolFailures": "도구 실패",
+          "startedAt": "시작",
+          "completedAt": "완료",
+          "unavailable": "미수집",
+          "approx": "추정"
+        },
+        "memory": {
+          "title": "메모리",
+          "count": "{count, plural, other {#개}}",
+          "empty": "아직 기억이 없습니다"
+        },
+        "rules": {
+          "label": "적용 중인 규칙",
+          "hint": "이 세션에 적용되는 규칙 파일 — 클릭하여 열기"
+        }
+      },
       "noFolderTitle": "열린 폴더 없음",
       "noFolderHint": "폴더를 열면 여기에 표시됩니다"
     },

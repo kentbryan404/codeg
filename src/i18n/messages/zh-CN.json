@@ -2190,6 +2190,52 @@
         "changes": "变更",
         "commits": "提交"
       },
+      "thinking": {
+        "tabLabel": "思考",
+        "count": "{count, plural, other {# 段思考}}",
+        "empty": "还没有思考内容",
+        "jumpToLatest": "跳到最新",
+        "expandAll": "全部展开",
+        "collapseAll": "全部折叠",
+"discipline": {
+  "title": "规则纪律",
+  "global": "全局",
+  "project": "项目",
+  "system": "系统",
+  "none": "未找到生效的规则文件"
+},
+"creed": {
+          "title": "思考信条",
+          "hint": "每轮对话发送前自动附在提示最前面，所有智能体、每次思考都会读到。",
+          "placeholder": "例如：用中文思考；先给结论，再给依据…"
+        },
+        "metrics": {
+          "groupContext": "组包",
+          "groupCache": "缓存",
+          "groupInference": "推理",
+          "groupTools": "工具",
+          "groupTiming": "时间",
+          "model": "模型",
+          "thinkingOfReply": "思考占比",
+          "duration": "耗时",
+          "throughput": "吞吐",
+          "toolCalls": "工具调用",
+          "toolFailures": "工具失败",
+          "startedAt": "开始",
+          "completedAt": "完成",
+          "unavailable": "未采集",
+          "approx": "估算"
+        },
+        "memory": {
+          "title": "记忆库",
+          "count": "{count, plural, other {# 条记忆}}",
+          "empty": "还没有记忆"
+        },
+        "rules": {
+          "label": "生效的规则",
+          "hint": "本次会话生效的规则文件，点击打开"
+        }
+      },
       "noFolderTitle": "暂无打开的文件夹",
       "noFolderHint": "打开一个文件夹后在这里查看"
     },

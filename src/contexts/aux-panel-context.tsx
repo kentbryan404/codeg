@@ -19,6 +19,7 @@ import { isDesktop } from "@/lib/platform"
 
 export type AuxPanelTab =
   | "session_details"
+  | "thinking"
   | "file_tree"
   | "changes"
   | "git_log"

@@ -1393,6 +1393,15 @@ pub fn build_router(
             "/quick_messages_reorder",
             post(handlers::quick_messages::quick_messages_reorder),
         )
+        // ─── Thinking Creed ───
+        .route(
+            "/thinking_creed_get",
+            post(handlers::thinking_creed::thinking_creed_get),
+        )
+        .route(
+            "/thinking_creed_set",
+            post(handlers::thinking_creed::thinking_creed_set),
+        )
         // ─── Automations ───
         .route(
             "/automation_list",

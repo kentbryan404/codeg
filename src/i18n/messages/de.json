@@ -2190,6 +2190,52 @@
         "changes": "Änderungen",
         "commits": "Einträge"
       },
+      "thinking": {
+        "tabLabel": "Denken",
+        "count": "{count, plural, one {# Gedanke} other {# Gedanken}}",
+        "empty": "Noch kein Denken",
+        "jumpToLatest": "Zum Neuesten",
+        "expandAll": "Alle ausklappen",
+        "collapseAll": "Alle einklappen",
+"discipline": {
+  "title": "Regel-Disziplin",
+  "global": "Global",
+  "project": "Projekt",
+  "system": "System",
+  "none": "Keine wirksame Regeln-Datei"
+},
+"creed": {
+          "title": "Denk-Credo",
+          "hint": "Wird jedem Prompt für alle Agenten vorangestellt und vor jedem Denkschritt gelesen.",
+          "placeholder": "z. B. Denke auf Chinesisch; erst Fazit, dann Belege…"
+        },
+        "metrics": {
+          "groupContext": "Kontext",
+          "groupCache": "Cache",
+          "groupInference": "Inferenz",
+          "groupTools": "Tools",
+          "groupTiming": "Zeit",
+          "model": "Modell",
+          "thinkingOfReply": "Denkanteil",
+          "duration": "Dauer",
+          "throughput": "Durchsatz",
+          "toolCalls": "Tool-Aufrufe",
+          "toolFailures": "Tool-Fehler",
+          "startedAt": "Start",
+          "completedAt": "Ende",
+          "unavailable": "Nicht erfasst",
+          "approx": "gesch."
+        },
+        "memory": {
+          "title": "Gedächtnis",
+          "count": "{count, plural, one {# Eintrag} other {# Einträge}}",
+          "empty": "Noch kein Gedächtnis"
+        },
+        "rules": {
+          "label": "Aktive Regeln",
+          "hint": "Die für diese Sitzung gültige Regeldatei – zum Öffnen klicken"
+        }
+      },
       "noFolderTitle": "Kein Ordner geöffnet",
       "noFolderHint": "Öffnen Sie einen Ordner, um seinen Inhalt hier zu sehen"
     },

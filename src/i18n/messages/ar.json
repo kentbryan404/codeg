@@ -2190,6 +2190,52 @@
         "changes": "التغييرات",
         "commits": "الالتزامات"
       },
+      "thinking": {
+        "tabLabel": "التفكير",
+        "count": "{count, plural, other {# أفكار}}",
+        "empty": "لا يوجد تفكير بعد",
+        "jumpToLatest": "الانتقال إلى الأحدث",
+        "expandAll": "توسيع الكل",
+        "collapseAll": "طي الكل",
+"discipline": {
+  "title": "انضباط القواعد",
+  "global": "عام",
+  "project": "المشروع",
+  "system": "النظام",
+  "none": "لا يوجد ملف قواعد سارٍ"
+},
+"creed": {
+          "title": "عقيدة التفكير",
+          "hint": "تُضاف في مقدمة كل طلب لجميع الوكلاء، فيقرؤونها قبل كل خطوة تفكير.",
+          "placeholder": "مثال: فكّر بالصينية؛ الخلاصة أولاً ثم الأدلة…"
+        },
+        "metrics": {
+          "groupContext": "السياق",
+          "groupCache": "التخزين المؤقت",
+          "groupInference": "الاستدلال",
+          "groupTools": "الأدوات",
+          "groupTiming": "الوقت",
+          "model": "الطراز",
+          "thinkingOfReply": "نسبة التفكير",
+          "duration": "المدة",
+          "throughput": "الإنتاجية",
+          "toolCalls": "استدعاءات الأدوات",
+          "toolFailures": "إخفاقات الأدوات",
+          "startedAt": "البداية",
+          "completedAt": "الإكمال",
+          "unavailable": "غير مُجمَّع",
+          "approx": "تقديري"
+        },
+        "memory": {
+          "title": "الذاكرة",
+          "count": "{count, plural, other {# عنصر}}",
+          "empty": "لا توجد ذاكرة بعد"
+        },
+        "rules": {
+          "label": "القواعد السارية",
+          "hint": "ملف القواعد الساري في هذه الجلسة — انقر لفتحه"
+        }
+      },
       "noFolderTitle": "لا يوجد مجلد مفتوح",
       "noFolderHint": "افتح مجلدا لعرض محتواه هنا"
     },

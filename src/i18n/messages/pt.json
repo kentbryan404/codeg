@@ -2190,6 +2190,52 @@
         "changes": "Alterações",
         "commits": "Confirmações"
       },
+      "thinking": {
+        "tabLabel": "Pensamento",
+        "count": "{count, plural, one {# pensamento} other {# pensamentos}}",
+        "empty": "Ainda sem pensamento",
+        "jumpToLatest": "Ir para o mais recente",
+        "expandAll": "Expandir tudo",
+        "collapseAll": "Recolher tudo",
+"discipline": {
+  "title": "Disciplina de regras",
+  "global": "Global",
+  "project": "Projeto",
+  "system": "Sistema",
+  "none": "Nenhum arquivo de regras em vigor"
+},
+"creed": {
+          "title": "Credo de pensamento",
+          "hint": "Prefixado a cada prompt para todos os agentes, lido antes de cada etapa de raciocínio.",
+          "placeholder": "ex.: Pense em chinês; conclusão primeiro, evidências depois…"
+        },
+        "metrics": {
+          "groupContext": "Contexto",
+          "groupCache": "Cache",
+          "groupInference": "Inferência",
+          "groupTools": "Ferramentas",
+          "groupTiming": "Tempo",
+          "model": "Modelo",
+          "thinkingOfReply": "Proporção de pensamento",
+          "duration": "Duração",
+          "throughput": "Taxa",
+          "toolCalls": "Chamadas de ferramenta",
+          "toolFailures": "Falhas de ferramenta",
+          "startedAt": "Início",
+          "completedAt": "Fim",
+          "unavailable": "Não coletado",
+          "approx": "est."
+        },
+        "memory": {
+          "title": "Memória",
+          "count": "{count, plural, one {# entrada} other {# entradas}}",
+          "empty": "Ainda sem memória"
+        },
+        "rules": {
+          "label": "Regras ativas",
+          "hint": "O arquivo de regras em vigor nesta sessão — clique para abrir"
+        }
+      },
       "noFolderTitle": "Nenhuma pasta aberta",
       "noFolderHint": "Abra uma pasta para ver seu conteúdo aqui"
     },

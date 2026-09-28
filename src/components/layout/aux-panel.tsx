@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
+  Brain,
   Folder,
   FolderPen,
   GitCommit,
@@ -36,13 +37,24 @@ import { FileTreeTab } from "./aux-panel-file-tree-tab"
 import { GitChangesTab } from "./aux-panel-git-changes-tab"
 import { GitLogTab } from "./aux-panel-git-log-tab"
 import { ReleasesTab } from "./aux-panel-releases-tab"
+import { ThinkingTab } from "./aux-panel-thinking-tab"
 
-const LAZY_TABS: AuxPanelTab[] = ["file_tree", "changes", "git_log", "releases"]
+const LAZY_TABS: AuxPanelTab[] = [
+  "thinking",
+  "file_tree",
+  "changes",
+  "git_log",
+  "releases",
+]
 
 // Visible order + icon for every aux tab. Both the desktop segmented control
 // and the collapsed picker map over this, so the two surfaces can never drift.
+// Thinking sits in front of the folder tab on purpose: it is session-scoped and
+// reads as the first thing about the live conversation, while everything after
+// it is folder-scoped.
 const TAB_ORDER: AuxPanelTab[] = [
   "session_details",
+  "thinking",
   "file_tree",
   "changes",
   "git_log",
@@ -50,16 +62,17 @@ const TAB_ORDER: AuxPanelTab[] = [
 ]
 const TAB_ICONS: Record<AuxPanelTab, LucideIcon> = {
   session_details: ReceiptText,
+  thinking: Brain,
   file_tree: Folder,
   changes: FolderPen,
   git_log: GitCommit,
   releases: Tag,
 }
 // The three folder-scoped tabs share one label namespace (Folder.auxPanel.tabs);
-// session details resolves from its own (Folder.sessionDetails.menuLabel). The
+// session details, thinking and releases resolve from their own namespaces. The
 // value type is the literal key union so next-intl's typed `t()` accepts it.
 const FOLDER_TAB_LABEL_KEY: Record<
-  Exclude<AuxPanelTab, "session_details" | "releases">,
+  Exclude<AuxPanelTab, "session_details" | "thinking" | "releases">,
   "files" | "changes" | "commits"
 > = {
   file_tree: "files",
@@ -67,7 +80,12 @@ const FOLDER_TAB_LABEL_KEY: Record<
   git_log: "commits",
 }
 
-// The desktop segmented control needs ~130px (4 icon triggers + gaps + track
+/** Folder workspace tabs — hidden without an open folder (or in chat mode). */
+export function isFolderScopedTab(tab: AuxPanelTab): boolean {
+  return tab === "file_tree" || tab === "changes" || tab === "git_log"
+}
+
+// The desktop segmented control needs ~194px (6 icon triggers + gaps + track
 // padding). It's pinned to the strip's LEFT while the fixed window-chrome
 // overlay (terminal/aux/settings, plus the native caption on Windows/Linux)
 // floats over the RIGHT edge. Once the panel is too narrow to seat the control
@@ -76,7 +94,7 @@ const FOLDER_TAB_LABEL_KEY: Record<
 // all three grow with the zoom level — as `rightReserve` already does. Pinned at
 // their 100% pixel values the strip would stay expanded at higher zoom levels
 // and slide under the chrome overlay.
-const SEGMENTED_TABS_WIDTH_REM = 10.125 // ~162px @100% (five icon triggers)
+const SEGMENTED_TABS_WIDTH_REM = 12.125 // ~194px @100% (six icon triggers)
 const TAB_STRIP_GUTTER_REM = 0.75 // pl-3
 const TAB_STRIP_GAP_REM = 0.75 // breathing room before the chrome overlay
 
@@ -117,22 +135,22 @@ export function resolveAuxTabView(
   isChatMode: boolean
 ): { showFolderTabs: boolean; effectiveTab: AuxPanelTab } {
   const showFolderTabs = activeFolderId != null && !isChatMode
-  // Only the folder-scoped tabs are hidden without a folder; Session Details
-  // and Releases are always available, so a stored selection of one survives.
-  const isFolderTab =
-    activeTab === "file_tree" ||
-    activeTab === "changes" ||
-    activeTab === "git_log"
+  // Only the folder-scoped tabs are hidden without a folder; Session Details,
+  // Thinking and Releases are always available, so a stored selection of one
+  // survives.
   return {
     showFolderTabs,
     effectiveTab:
-      showFolderTabs || !isFolderTab ? activeTab : "session_details",
+      showFolderTabs || !isFolderScopedTab(activeTab)
+        ? activeTab
+        : "session_details",
   }
 }
 
 export function AuxPanel() {
   const t = useTranslations("Folder.auxPanel.tabs")
   const tDetails = useTranslations("Folder.sessionDetails")
+  const tThinking = useTranslations("Folder.auxPanel.thinking")
   const tUpstream = useTranslations("UpstreamReleases")
   const { isOpen, width, activeTab, setActiveTab } = useAuxPanelContext()
   const { activeFolderId } = useActiveFolder()
@@ -181,9 +199,11 @@ export function AuxPanel() {
 
   // Reconcile the stored selection when folder tabs disappear (e.g. entering a
   // chat session), so other consumers of `activeTab` stay in sync with what's
-  // shown. Done in an effect — never a render-time setState on the provider.
+  // shown. Only the folder-scoped tabs are forced back; Thinking / Releases
+  // stay selected. Done in an effect — never a render-time setState on the
+  // provider.
   useEffect(() => {
-    if (!showFolderTabs && activeTab !== "session_details") {
+    if (!showFolderTabs && isFolderScopedTab(activeTab)) {
       setActiveTab("session_details")
     }
   }, [showFolderTabs, activeTab, setActiveTab])
@@ -216,10 +236,22 @@ export function AuxPanel() {
     (tab: AuxPanelTab) =>
       tab === "session_details"
         ? tDetails("menuLabel")
-        : tab === "releases"
-          ? tUpstream("title")
-          : t(FOLDER_TAB_LABEL_KEY[tab]),
-    [t, tDetails, tUpstream]
+        : tab === "thinking"
+          ? tThinking("tabLabel")
+          : tab === "releases"
+            ? tUpstream("title")
+            : t(FOLDER_TAB_LABEL_KEY[tab]),
+    [t, tDetails, tThinking, tUpstream]
+  )
+
+  // A tab is rendered when it is session/global scoped or the folder is open.
+  const isTabVisible = useCallback(
+    (tab: AuxPanelTab) =>
+      tab === "session_details" ||
+      tab === "thinking" ||
+      tab === "releases" ||
+      showFolderTabs,
+    [showFolderTabs]
   )
 
   // Shared across the mobile underline row and the desktop segmented control.
@@ -229,9 +261,7 @@ export function AuxPanel() {
     const triggerClassName = compact
       ? "h-6 flex-none rounded-md px-2"
       : undefined
-    return TAB_ORDER.filter(
-      (tab) => tab === "session_details" || tab === "releases" || showFolderTabs
-    ).map((tab) => {
+    return TAB_ORDER.filter(isTabVisible).map((tab) => {
       const Icon = TAB_ICONS[tab]
       const label = tabLabel(tab)
       return (
@@ -273,7 +303,7 @@ export function AuxPanel() {
             value={effectiveTab}
             onValueChange={handleTabValueChange}
           >
-            {TAB_ORDER.map((tab) => {
+            {TAB_ORDER.filter(isTabVisible).map((tab) => {
               const Icon = TAB_ICONS[tab]
               return (
                 <DropdownMenuRadioItem key={tab} value={tab}>
@@ -375,6 +405,13 @@ export function AuxPanel() {
           className="mt-0 flex-1 min-h-0 overflow-hidden"
         >
           <SessionDetailsTab />
+        </TabsContent>
+        <TabsContent
+          value="thinking"
+          forceMount
+          className="mt-0 flex-1 min-h-0 overflow-hidden"
+        >
+          {mountedTabs.has("thinking") ? <ThinkingTab /> : null}
         </TabsContent>
         <TabsContent
           value="file_tree"

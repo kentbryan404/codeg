@@ -1,10 +1,21 @@
 import type { AbstractIntlMessages } from "next-intl"
-import enMessages from "@/i18n/messages/en.json"
 import type { AppLocale } from "@/lib/types"
 
-const MESSAGE_CACHE = new Map<AppLocale, AbstractIntlMessages>([
-  ["en", enMessages],
-])
+/**
+ * Locale message sets, loaded on demand.
+ *
+ * Deliberately NO static English import. A static `import enMessages from
+ * "…/en.json"` drags the whole ~280 KB message set into the boot graph of every
+ * route — it was the largest single chunk the first paint paid for, on every
+ * locale, even though the active locale's messages already arrive inlined in
+ * the server payload (`app/layout.tsx` → `AppI18nProvider initialMessages`).
+ * English is now fetched like every other locale, and only when actually
+ * selected.
+ *
+ * The cache keeps a locale's parsed object alive across swaps, so switching
+ * back to a previously used locale does not re-import it.
+ */
+const MESSAGE_CACHE = new Map<AppLocale, AbstractIntlMessages>()
 
 async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessages> {
   switch (locale) {
@@ -28,12 +39,8 @@ async function loadMessages(locale: AppLocale): Promise<AbstractIntlMessages> {
       return (await import("@/i18n/messages/ar.json")).default
     case "en":
     default:
-      return enMessages
+      return (await import("@/i18n/messages/en.json")).default
   }
-}
-
-export function getFallbackMessages(): AbstractIntlMessages {
-  return enMessages
 }
 
 export async function getMessagesForLocale(

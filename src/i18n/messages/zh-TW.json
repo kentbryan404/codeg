@@ -2190,6 +2190,52 @@
         "changes": "變更",
         "commits": "提交"
       },
+      "thinking": {
+        "tabLabel": "思考",
+        "count": "{count, plural, other {# 段思考}}",
+        "empty": "還沒有思考內容",
+        "jumpToLatest": "跳到最新",
+        "expandAll": "全部展開",
+        "collapseAll": "全部摺疊",
+"discipline": {
+  "title": "規則紀律",
+  "global": "全域",
+  "project": "專案",
+  "system": "系統",
+  "none": "未找到生效的規則檔"
+},
+"creed": {
+          "title": "思考信條",
+          "hint": "每輪對話送出前自動附在提示最前面，所有智慧體、每次思考都會讀到。",
+          "placeholder": "例如：用中文思考；先給結論，再給依據…"
+        },
+        "metrics": {
+          "groupContext": "組包",
+          "groupCache": "快取",
+          "groupInference": "推理",
+          "groupTools": "工具",
+          "groupTiming": "時間",
+          "model": "模型",
+          "thinkingOfReply": "思考佔比",
+          "duration": "耗時",
+          "throughput": "吞吐",
+          "toolCalls": "工具呼叫",
+          "toolFailures": "工具失敗",
+          "startedAt": "開始",
+          "completedAt": "完成",
+          "unavailable": "未採集",
+          "approx": "估算"
+        },
+        "memory": {
+          "title": "記憶庫",
+          "count": "{count, plural, other {# 條記憶}}",
+          "empty": "還沒有記憶"
+        },
+        "rules": {
+          "label": "生效的規則",
+          "hint": "本次工作階段生效的規則檔，點擊開啟"
+        }
+      },
       "noFolderTitle": "尚無開啟的資料夾",
       "noFolderHint": "開啟一個資料夾後可在此查看"
     },

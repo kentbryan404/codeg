@@ -259,6 +259,16 @@ axum-test = { version = "17", features = ["ws"] }
 [profile.dev]
 debug = "line-tables-only"
 
+# Dependencies carry no debug info at all. The workspace crate keeps its line
+# tables (above) — that is where a backtrace into codeg's own code needs them —
+# while tauri / sea-orm / sqlx / tokio objects are the overwhelming majority of
+# both the compile input and every link (each `tests/*.rs` binary links the
+# whole lib). Dropping THEIR DWARF cuts dependency compile time and every test
+# or desktop link. Trade-off: a panic unwinding through a dependency shows its
+# symbols without file:line. `test` inherits `dev`, so this covers `cargo test`.
+[profile.dev.package."*"]
+debug = false
+
 # Distribution profile. Cargo's defaults already give opt-level=3 / lto=false /
 # codegen-units=16; the one change here is stripping the symbol table. tauri
 # otherwise leaves it in (it passes `-C strip=debuginfo`), and on the ~132 MB

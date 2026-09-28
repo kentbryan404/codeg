@@ -10,7 +10,7 @@ import {
   useSyncExternalStore,
 } from "react"
 import { NextIntlClientProvider, type AbstractIntlMessages } from "next-intl"
-import { getFallbackMessages, getMessagesForLocale } from "@/i18n/messages"
+import { getMessagesForLocale } from "@/i18n/messages"
 import {
   fromIntlLocale,
   getSystemLocaleCandidates,
@@ -104,11 +104,16 @@ export function AppI18nProvider({
       language: initialAppLocale,
     })
   const [languageSettingsLoaded, setLanguageSettingsLoaded] = useState(false)
-  const [messages, setMessages] = useState<AbstractIntlMessages>(
-    initialMessages ?? getFallbackMessages()
+  // `null` until the messages land. The root layout ALWAYS passes
+  // `initialMessages` (they are inlined in the server payload), so in the app
+  // the first render already has them and nothing waits; the null path is for
+  // a provider rendered without the server prop, which then loads them async
+  // through the same effect that handles a locale swap.
+  const [messages, setMessages] = useState<AbstractIntlMessages | null>(
+    initialMessages ?? null
   )
-  const [messagesLocale, setMessagesLocale] = useState<AppLocale>(
-    initialMessages ? initialAppLocale : "en"
+  const [messagesLocale, setMessagesLocale] = useState<AppLocale | null>(
+    initialMessages ? initialAppLocale : null
   )
 
   const systemLocaleSnapshot = useSyncExternalStore(
@@ -248,9 +253,20 @@ export function AppI18nProvider({
     }
   }, [appLocale, messagesLocale])
 
+  // First paint uses the SERVER-resolved locale: `languageSettings` starts as
+  // `{ manual, initialAppLocale }`, so `appLocale` already equals the locale the
+  // inlined `initialMessages` belong to. The saved language setting only ever
+  // SWAPS messages in place once its IPC lands — it must not gate the first
+  // paint. `booted` latches the moment the app has rendered: a later swap makes
+  // `localeReady` false for the length of one dynamic import, and without the
+  // latch that would tear the mounted app back to the boot screen.
   const localeReady = appLocale === messagesLocale
-  const appReady = languageSettingsLoaded && localeReady
-  const activeIntlLocale = toIntlLocale(messagesLocale)
+  const [booted, setBooted] = useState(false)
+  useEffect(() => {
+    if (localeReady) setBooted(true)
+  }, [localeReady])
+  const appReady = localeReady || booted
+  const activeIntlLocale = toIntlLocale(messagesLocale ?? appLocale)
 
   useEffect(() => {
     document.documentElement.lang = activeIntlLocale
@@ -269,7 +285,10 @@ export function AppI18nProvider({
 
   return (
     <AppI18nContext.Provider value={contextValue}>
-      <NextIntlClientProvider locale={activeIntlLocale} messages={messages}>
+      <NextIntlClientProvider
+        locale={activeIntlLocale}
+        messages={messages ?? undefined}
+      >
         {appReady ? children : <AppBootLoading />}
       </NextIntlClientProvider>
     </AppI18nContext.Provider>
