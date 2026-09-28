@@ -290,6 +290,18 @@ struct SpawnDedupKey {
     session_id: String,
 }
 
+/// Drop dedup-lock entries no task holds any more.
+///
+/// The map is keyed by `(agent, working_dir, session_id)`, so a left-behind
+/// entry is permanent — one per session ever resumed. A `strong_count` above
+/// one means some other task still holds the `Arc` (waiting on, or inside, its
+/// own critical section), and dropping that entry would let a later caller mint
+/// a second lock for the same key and spawn a duplicate process. Only idle
+/// entries go.
+fn prune_idle_dedup_locks(locks: &mut HashMap<SpawnDedupKey, Arc<Mutex<()>>>) {
+    locks.retain(|_, mu| Arc::strong_count(mu) > 1);
+}
+
 /// Default upper bound on how long `spawn_agent` will hold the per-session
 /// dedup lock waiting for `SessionStarted`. Picked to comfortably cover
 /// cold-start agents (claude-code/codex warm: <2s; npx-fetched cold: 10–30s)
@@ -712,16 +724,16 @@ impl ConnectionManager {
         // is None (fresh sessions can't dedup — by design — since the
         // agent assigns the id).
         let session_id_for_log = session_id.clone();
-        let dedup_lock = if let Some(sid) = session_id.as_deref() {
-            let key = SpawnDedupKey {
-                agent_type,
-                working_dir: working_dir_path.clone(),
-                session_id: sid.to_string(),
-            };
+        let dedup_key = session_id.as_deref().map(|sid| SpawnDedupKey {
+            agent_type,
+            working_dir: working_dir_path.clone(),
+            session_id: sid.to_string(),
+        });
+        let dedup_lock = if let Some(key) = dedup_key.as_ref() {
             let mu = {
                 let mut locks = self.spawn_locks.lock().await;
                 locks
-                    .entry(key)
+                    .entry(key.clone())
                     .or_insert_with(|| Arc::new(Mutex::new(())))
                     .clone()
             };
@@ -791,6 +803,18 @@ impl ConnectionManager {
         // connection terminates, no leak.
 
         drop(dedup_lock);
+
+        // Prune the lock we just released. The map is keyed by
+        // (agent, working_dir, session_id), so an unpruned entry is permanent —
+        // one per session ever resumed. `strong_count > 1` means another task
+        // still holds the Arc (waiting on, or inside, its own critical
+        // section); dropping one of those would let a later caller mint a
+        // second lock for the same key and spawn a duplicate process, so those
+        // stay. Only idle entries are removed.
+        if dedup_key.is_some() {
+            let mut locks = self.spawn_locks.lock().await;
+            prune_idle_dedup_locks(&mut locks);
+        }
 
         Ok(connection_id)
     }
@@ -7088,6 +7112,35 @@ mod tests {
             cloned_locks.contains_key(&key),
             "spawn_locks must be shared between original and clone_ref"
         );
+    }
+
+    /// The dedup lock map is keyed by session id, so an entry left behind after
+    /// a connect would be permanent — one per session ever resumed. Pruning must
+    /// drop the idle ones and keep any still held by a concurrent waiter.
+    #[test]
+    fn prune_idle_dedup_locks_drops_only_unheld_entries() {
+        let mut locks: HashMap<SpawnDedupKey, Arc<tokio::sync::Mutex<()>>> = HashMap::new();
+        let idle = SpawnDedupKey {
+            agent_type: AgentType::OpenCode,
+            working_dir: None,
+            session_id: "ext-idle".into(),
+        };
+        let held = SpawnDedupKey {
+            agent_type: AgentType::OpenCode,
+            working_dir: None,
+            session_id: "ext-held".into(),
+        };
+        locks.insert(idle.clone(), Arc::new(tokio::sync::Mutex::new(())));
+        // Simulates a second `spawn_agent` waiting on the same key: the map's
+        // entry plus this clone is what `strong_count > 1` stands for.
+        let waiter = Arc::new(tokio::sync::Mutex::new(()));
+        locks.insert(held.clone(), Arc::clone(&waiter));
+
+        prune_idle_dedup_locks(&mut locks);
+
+        assert!(!locks.contains_key(&idle), "idle entry must be pruned");
+        assert!(locks.contains_key(&held), "held entry must survive");
+        assert_eq!(Arc::strong_count(&waiter), 2);
     }
 
     /// Two concurrent `send_prompt_linked` calls on the SAME connection

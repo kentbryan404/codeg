@@ -6208,7 +6208,35 @@ async fn run_connection(
             )
             .await;
 
+            // `CODEG_ACP_EARLY_READY=1`: announce the session as started BEFORE
+            // `session/resume` / `session/load` is sent, so the UI leaves
+            // "connecting" in the ~1–3s the handshake takes instead of waiting
+            // out the agent's history load. Safe because the transcript the user
+            // sees comes from the disk parser, not from the ACP wire (see the
+            // resume note below), and prompts sent in the window buffer in
+            // `cmd_rx` until `run_conversation_loop` starts. Off by default: an
+            // agent that then fails to load shows "connected" for a moment
+            // before the existing failure ladder runs.
+            let early_ready = session_id.is_some()
+                && std::env::var("CODEG_ACP_EARLY_READY")
+                    .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+                    .unwrap_or(false);
+            // Set once the id has been announced, so the success arms below do
+            // not announce it a second time.
+            let mut announced_sid: Option<String> = None;
+
             if let Some(sid) = session_id {
+                if early_ready {
+                    announced_sid = Some(sid.clone());
+                    emit_with_state(
+                        &state,
+                        &emitter_clone,
+                        AcpEvent::SessionStarted {
+                            session_id: sid.clone(),
+                        },
+                    )
+                    .await;
+                }
                 // Prefer session/resume when the agent advertises the
                 // capability: it restores session context WITHOUT replaying
                 // history (which session/load does only for us to drain and
@@ -6247,14 +6275,17 @@ async fn run_connection(
                             // is consumed and forwarded by run_conversation_loop.
 
                             record_transcript_header(agent_type, &sid, &cwd.to_string_lossy());
-                            emit_with_state(
-                                &state,
-                                &emitter_clone,
-                                AcpEvent::SessionStarted {
-                                    session_id: sid.clone(),
-                                },
-                            )
-                            .await;
+                            if announced_sid.as_deref() != Some(sid.as_str()) {
+                                announced_sid = Some(sid.clone());
+                                emit_with_state(
+                                    &state,
+                                    &emitter_clone,
+                                    AcpEvent::SessionStarted {
+                                        session_id: sid.clone(),
+                                    },
+                                )
+                                .await;
+                            }
                             emit_session_modes(&state, &emitter_clone, session.modes()).await;
                             apply_and_emit_session_config_options(
                                 &cx,
@@ -6356,7 +6387,18 @@ async fn run_connection(
                         &cwd,
                         mcp_servers.clone(),
                     );
-                    cx.send_request_to(Agent, load_req).block_task().await
+                    // Logged because this single RPC is where a resume's wall
+                    // clock goes for agents that answer `session/load` slowly
+                    // (OpenCode: 5–38s observed, occasionally past the 60s dedup
+                    // timeout). `Initialize` is ~3s; the gap between
+                    // `Connected` and `SessionStarted` is this call.
+                    let load_started = std::time::Instant::now();
+                    let result = cx.send_request_to(Agent, load_req).block_task().await;
+                    tracing::info!(
+                        "[ACP] session/load responded in {:?}",
+                        load_started.elapsed()
+                    );
+                    result
                 } else {
                     Err(agent_client_protocol::Error::method_not_found()
                         .data("agent does not advertise the loadSession capability"))
@@ -6504,14 +6546,17 @@ async fn run_connection(
                             tracing::info!("[ACP] Drained {drained} historical replay notifications");
                         }
 
-                        emit_with_state(
-                            &state,
-                            &emitter_clone,
-                            AcpEvent::SessionStarted {
-                                session_id: sid.clone(),
-                            },
-                        )
-                        .await;
+                        if announced_sid.as_deref() != Some(sid.as_str()) {
+                            announced_sid = Some(sid.clone());
+                            emit_with_state(
+                                &state,
+                                &emitter_clone,
+                                AcpEvent::SessionStarted {
+                                    session_id: sid.clone(),
+                                },
+                            )
+                            .await;
+                        }
                         emit_session_modes(&state, &emitter_clone, session.modes()).await;
                         apply_and_emit_session_config_options(
                             &cx,
