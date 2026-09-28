@@ -82,6 +82,7 @@ vi.mock("@/hooks/use-enabled-skill-ids", () => ({
 vi.mock("@/components/chat/composer/use-reference-search", () => ({
   useReferenceSearch: () => async () => [],
 }))
+const folderPickerVisible = vi.hoisted(() => vi.fn(() => false))
 vi.mock("@/components/chat/conversation-context-bar", () => ({
   ConversationContextBar: ({
     extraContent,
@@ -89,10 +90,15 @@ vi.mock("@/components/chat/conversation-context-bar", () => ({
     extraContent?: React.ReactNode
   }) => <div data-testid="ctx-bar">{extraContent}</div>,
   // The composer imports these to render the below-input folder/branch row.
-  // Keep it hidden here (visibility → false) so these tests exercise the bare
-  // composer without pulling in the picker's tab-store/git dependencies.
+  // Hidden by default; the cold-start test resolves it after the editor mounts.
   ConversationFolderBranchPicker: () => null,
-  useConversationFolderBranchPickerVisible: () => false,
+  useConversationFolderBranchPickerVisible: folderPickerVisible,
+}))
+vi.mock("./composer-context-usage", () => ({
+  ComposerContextUsage: () => null,
+}))
+vi.mock("./composer-connection-status", () => ({
+  ComposerConnectionStatus: () => null,
 }))
 // The platform opener is the DESKTOP arm of the shared opener; this suite runs
 // in web mode, where a system-browser target lands on `window.open` instead.
@@ -2372,5 +2378,52 @@ describe("MessageInput composer box sizing (#746)", () => {
       editorRoot.compareDocumentPosition(actionRow!) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy()
+  })
+})
+
+describe("MessageInput folder data arriving after mount", () => {
+  afterEach(() => {
+    cleanup()
+    folderPickerVisible.mockReturnValue(false)
+  })
+
+  it("keeps a block wrapper and the editable draft when the folder row appears", async () => {
+    const input = (
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <MessageInput onSend={vi.fn()} promptCapabilities={CAPS} />
+      </NextIntlClientProvider>
+    )
+    const { container, rerender } = render(input)
+    await waitFor(() =>
+      expect(composerHandle.current?.getEditor()).toBeTruthy()
+    )
+    const handle = composerHandle.current!
+    const editor = handle.getEditor()!
+    const editorDom = editor.view.dom
+    act(() => handle.insertTextAtCursor("keep this draft"))
+    const chrome = container.querySelector(".codeg-composer-chrome")!
+    const wrapper = chrome.parentElement!
+    // jsdom has no layout engine, so it cannot reproduce the collapse; this
+    // pins the class contract that avoids it. One class per negative
+    // assertion: `not.toHaveClass(a, b)` passes as soon as either is missing.
+    // Unattached, nothing may clip the chrome's outer focus ring.
+    expect(wrapper).toHaveClass("block")
+    expect(wrapper).not.toHaveClass("contents")
+    expect(wrapper).not.toHaveClass("overflow-hidden")
+
+    folderPickerVisible.mockReturnValue(true)
+    rerender(
+      <NextIntlClientProvider locale="en" messages={enMessages}>
+        <MessageInput onSend={vi.fn()} promptCapabilities={CAPS} />
+      </NextIntlClientProvider>
+    )
+    expect(chrome.parentElement).toBe(wrapper)
+    expect(wrapper).toHaveClass("block", "overflow-hidden")
+    expect(wrapper).not.toHaveClass("contents")
+    expect(composerHandle.current!.getEditor()).toBe(editor)
+    expect(editor.view.dom).toBe(editorDom)
+    expect(handle.getText()).toBe("keep this draft")
+    act(() => editor.commands.undo())
+    expect(handle.getText()).toBe("")
   })
 })

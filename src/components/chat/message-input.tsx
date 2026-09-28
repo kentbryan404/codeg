@@ -2126,15 +2126,21 @@ export function MessageInput({
           </div>
         </div>
       )}
-      {/* When the folder/branch row is attached below the composer, this group
-          clips both into one rounded box (`overflow-hidden rounded-xl`); the
-          drag-active ring rides the wrapper so it isn't clipped. Standalone
-          (no row) it's layout-neutral (`display:contents`). */}
+      {/* Attached, this group clips the composer and the folder/branch row
+          below it into one rounded box (`overflow-hidden rounded-xl`); the
+          drag-active ring rides the wrapper so it isn't clipped. Standalone it
+          stays a plain block, never `display:contents`, because the row comes
+          and goes under a mounted editor (on a cold start it appears once the
+          restored tab's folder loads): some Blink builds (Chromium 111,
+          WebView2 145; not Chrome 153) drop the layout boxes inside the chrome
+          below, a size container (`@container`), when this ancestor flips
+          between `contents` and a box in either direction, leaving the editor
+          0x0 and unable to take input. */}
       <div
         className={cn(
-          folderBranchPickerAttached
-            ? "overflow-hidden rounded-xl transition-colors"
-            : "contents",
+          "block",
+          folderBranchPickerAttached &&
+            "overflow-hidden rounded-xl transition-colors",
           folderBranchPickerAttached &&
             showDragActive &&
             "ring-1 ring-primary/40"
