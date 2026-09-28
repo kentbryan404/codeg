@@ -258,6 +258,12 @@ tokio = { version = "1", features = ["test-util", "macros", "rt", "sync", "time"
 insta = { version = "1", features = ["json", "redactions"] }
 axum-test = { version = "17", features = ["ws"] }
 
+# Development profile: drop the DWARF variable/type info Cargo emits by default.
+# Keeps line tables so panic backtraces still name a file:line. Want maximum
+# speed and no backtraces on the dev binary? Use `debug = 0`.
+[profile.dev]
+debug = "line-tables-only"
+
 # Distribution profile. Cargo's defaults already give opt-level=3 / lto=false /
 # codegen-units=16; the one change here is stripping the symbol table. tauri
 # otherwise leaves it in (it passes `-C strip=debuginfo`), and on the ~132 MB
