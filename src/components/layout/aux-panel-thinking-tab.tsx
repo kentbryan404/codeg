@@ -74,6 +74,14 @@ export interface ThinkingSegment {
   key: string
   text: string
   live: boolean
+  /**
+   * True once the host turn is DONE — no longer streaming, and not an
+   * in-flight round a passive viewer is still watching the agent write.
+   * Stats render only on settled episodes: a live turn's usage grows per
+   * delta and its totals land on a later DB roundtrip, so showing them early
+   * is showing a half-measured number.
+   */
+  settled: boolean
   /** 1-based position of this episode in the whole reasoning stream. */
   episode: number
   at: string | null
@@ -231,11 +239,16 @@ export function collectThinkingSegments(
   const out: ThinkingSegment[] = []
   for (const entry of timeline) {
     const live = entry.phase === "streaming"
+    // `persisted` does NOT mean finished: a passive viewer reads rounds the
+    // backend still marks in flight (`isInFlightRound`), and their stats must
+    // stay hidden exactly like the local streaming case.
+    const settled = !live && !entry.isInFlightRound
     for (const episode of turnThinking(entry.turn)) {
       out.push({
         key: episode.key,
         text: episode.text,
         live,
+        settled,
         episode: out.length + 1,
         at: episode.at,
         metrics: episode.metrics,
@@ -250,14 +263,30 @@ export function collectThinkingSegments(
  * and the fold chevron. Reads `isOpen` from the Reasoning context so the
  * chevron tracks external (expand-all / collapse-all) changes too.
  */
-function EpisodeHeader({ episode, live }: { episode: number; live: boolean }) {
+function EpisodeHeader({
+  episode,
+  live,
+  at,
+}: {
+  episode: number
+  live: boolean
+  at: string | null
+}) {
   const tReasoning = useTranslations("Folder.chat.reasoning")
   const { isOpen } = useReasoning()
+  const clock = formatClock(at)
   return (
     <>
       <span className="shrink-0 font-mono text-[0.6875rem] tabular-nums text-muted-foreground/70">
         #{episode}
       </span>
+      {/* The clock lives in the header (it used to be the rail's gutter label)
+          so the cards can run the panel's full width. */}
+      {clock && (
+        <span className="shrink-0 font-mono text-[0.625rem] tabular-nums text-muted-foreground/50">
+          {clock}
+        </span>
+      )}
       {live && (
         <Shimmer
           duration={1}
@@ -279,135 +308,6 @@ function EpisodeHeader({ episode, live }: { episode: number; live: boolean }) {
 }
 
 /**
- * One timeline card: a foldable header + the full markdown body, rendered
- * through the SAME pipeline the transcript's folded reasoning uses
- * (`ReasoningContent` → Streamdown + the codeg link / mermaid plugins). The
- * text is complete — no clamp, no truncation.
- *
- * `open` is CONTROLLED by the tab so "expand all / collapse all" can drive every
- * card at once; `memo` means a streaming delta re-renders only the live card.
- */
-/** One small info card: a title and label/value rows. */
-function InfoCard({
-  title,
-  rows,
-}: {
-  title: string
-  rows: [string, string][]
-}) {
-  return (
-    <div className="min-w-0 rounded-lg border border-border/60 bg-background/40 px-2 py-1.5">
-      <div className="mb-0.5 text-[0.625rem] font-medium text-muted-foreground/80">
-        {title}
-      </div>
-      <dl className="space-y-0.5">
-        {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex items-baseline justify-between gap-2 text-[0.625rem]"
-          >
-            <dt className="shrink-0 text-muted-foreground/60">{label}</dt>
-            <dd
-              className="min-w-0 truncate font-mono text-foreground/75"
-              title={value}
-            >
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  )
-}
-
-/**
- * Every measured number the app has for this turn, grouped the way the request
- * path runs: what was assembled (context/model), what it cost (usage), the
- * cache share, the inference timing, the tool loop, and the clock. Fields no
- * agent persists render as "not collected" — the card never invents a zero.
- *
- * Performance: all of it is read from the turn's CACHED `TurnMetrics` object,
- * so nothing here recomputes per render, and the whole grid is inside the
- * folded content — a collapsed or off-screen card never lays it out.
- */
-function MetricCards({ metrics }: { metrics: TurnMetrics }) {
-  const t = useTranslations("Folder.auxPanel.thinking.metrics")
-  const tUsage = useTranslations("TokenUsage")
-  const na = t("unavailable")
-  const fmtTokens = (value: number | null) =>
-    value == null ? na : value.toLocaleString()
-  const pct = (value: number | null) =>
-    value == null ? na : `${Math.round(value * 100)}%`
-  const secs = (ms: number | null) =>
-    ms == null ? na : `${(ms / 1000).toFixed(1)}s`
-
-  return (
-    <div className="not-prose mb-3 grid grid-cols-2 gap-1.5">
-      <InfoCard
-        title={t("groupContext")}
-        rows={[
-          [t("model"), metrics.model ?? na],
-          [
-            t("thinkingOfReply"),
-            metrics.thinkingCharShare == null
-              ? na
-              : `${pct(metrics.thinkingCharShare)} ${t("approx")}`,
-          ],
-        ]}
-      />
-      <InfoCard
-        title={tUsage("title")}
-        rows={[
-          [tUsage("inputTokens"), fmtTokens(metrics.inputTokens)],
-          [tUsage("outputTokens"), fmtTokens(metrics.outputTokens)],
-          [tUsage("cacheRead"), fmtTokens(metrics.cacheReadTokens)],
-          [tUsage("cacheWrite"), fmtTokens(metrics.cacheWriteTokens)],
-        ]}
-      />
-      <InfoCard
-        title={t("groupCache")}
-        rows={[[tUsage("cacheHitCaption"), pct(metrics.cacheHitRate)]]}
-      />
-      <InfoCard
-        title={t("groupInference")}
-        rows={[
-          [t("duration"), secs(metrics.durationMs)],
-          [
-            t("throughput"),
-            metrics.tokensPerSecond == null
-              ? na
-              : `${metrics.tokensPerSecond.toFixed(1)}/s`,
-          ],
-        ]}
-      />
-      <InfoCard
-        title={t("groupTools")}
-        rows={[
-          [t("toolCalls"), String(metrics.toolCalls)],
-          [t("toolFailures"), String(metrics.toolFailures)],
-        ]}
-      />
-      <InfoCard
-        title={t("groupTiming")}
-        rows={[
-          [t("startedAt"), formatClock(metrics.startedAt) ?? na],
-          [t("completedAt"), formatClock(metrics.completedAt) ?? na],
-        ]}
-      />
-    </div>
-  )
-}
-
-/**
- * One timeline card: a foldable header, an always-visible metric strip, and the
- * full markdown body + the grouped info cards inside the fold.
- *
- * `open` is CONTROLLED by the tab so "expand all / collapse all" can drive every
- * card at once; `memo` means a streaming delta re-renders only the live card —
- * and `metrics` is a per-turn cached object, so finished cards bail out even
- * when the stream dispatches ~60 times a second.
- */
-/**
  * First-line preview for a FOLDED episode: markdown decoration stripped, hard
  * capped. Readability is mostly scannability — a folded row must still say what
  * was thought, not merely that something was thought at 14:22.
@@ -422,19 +322,35 @@ export function previewLine(text: string, max = 160): string {
   return stripped.length > max ? `${stripped.slice(0, max)}…` : stripped
 }
 
+/**
+ * One timeline card: a foldable header, the full markdown body (rendered
+ * through the SAME pipeline the transcript's folded reasoning uses —
+ * `ReasoningContent` → Streamdown + the codeg link / mermaid plugins; the text
+ * is complete, no clamp, no truncation), and the turn's measured numbers as a
+ * compact footer strip.
+ *
+ * `open` is CONTROLLED by the tab so "expand all / collapse all" can drive every
+ * card at once; `memo` means a streaming delta re-renders only the live card —
+ * and `metrics` is a per-turn cached object, so finished cards bail out even
+ * when the stream dispatches ~60 times a second.
+ */
 const ThinkingEpisode = memo(function ThinkingEpisode({
   text,
   live,
+  settled,
   open,
   onOpenChange,
   episode,
+  at,
   metrics,
 }: {
   text: string
   live: boolean
+  settled: boolean
   open: boolean
   onOpenChange: (open: boolean) => void
   episode: number
+  at: string | null
   metrics: TurnMetrics
 }) {
   const t = useTranslations("Folder.auxPanel.thinking.metrics")
@@ -461,10 +377,10 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
       className="flex flex-col"
     >
       <ReasoningTrigger
-        className="order-1 items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        className="order-1 items-center gap-2 rounded px-1 py-0.5 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
         title={open ? tEpisode("collapse") : tEpisode("expand")}
       >
-        <EpisodeHeader episode={episode} live={live} />
+        <EpisodeHeader episode={episode} live={live} at={at} />
       </ReasoningTrigger>
       {/* Folded rows keep a one-line gist: the stream stays scannable. */}
       {!open && preview ? (
@@ -472,50 +388,98 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
           {preview}
         </p>
       ) : null}
-      {/* At-a-glance strip, rendered as the post's FOOTER (Moments style).
-          Five spans, all from the cached metrics object — no formatting per
-          streamed delta. */}
-      <div className="order-last mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-1 font-mono text-[0.625rem] text-muted-foreground/80">
-        <span title={tUsage("inputTokens")}>
-          ↓{formatCompactTokens(metrics.inputTokens)}
-        </span>
-        <span title={tUsage("outputTokens")}>
-          ↑{formatCompactTokens(metrics.outputTokens)}
-        </span>
-        <span title={tUsage("cacheHitCaption")}>
-          ⚡
-          {metrics.cacheHitRate == null
-            ? "--"
-            : `${Math.round(metrics.cacheHitRate * 100)}%`}
-        </span>
-        <span title={t("duration")}>
-          {metrics.durationMs == null
-            ? "--"
-            : `${(metrics.durationMs / 1000).toFixed(1)}s`}
-        </span>
-        <span title={t("toolCalls")}>⚙{metrics.toolCalls}</span>
-        <button
-          type="button"
-          onClick={handleCopy}
-          title={copied ? tEpisode("copied") : tEpisode("copy")}
-          aria-label={copied ? tEpisode("copied") : tEpisode("copy")}
-          className="ml-auto inline-flex h-4 shrink-0 items-center gap-1 rounded px-1 text-[0.625rem] text-muted-foreground/80 transition-colors hover:text-foreground"
-        >
-          {copied ? (
-            <Check className="h-3 w-3" />
-          ) : (
-            <Copy className="h-3 w-3" />
+      {/* The turn's measured numbers as the card's FOOTER — one compact strip
+          instead of a separate info-card grid. The numbers appear only once
+          the turn SETTLES (a live turn's usage grows per delta and its totals
+          arrive later); the copy button does not depend on them. */}
+      <div className="order-last mt-1 px-1 text-[0.625rem] text-muted-foreground/80">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 font-mono">
+          {settled && (
+            <>
+              <span title={tUsage("inputTokens")}>
+                ↓{formatCompactTokens(metrics.inputTokens)}
+              </span>
+              <span title={tUsage("outputTokens")}>
+                ↑{formatCompactTokens(metrics.outputTokens)}
+              </span>
+              <span title={tUsage("cacheRead")}>
+                ⚡r{formatCompactTokens(metrics.cacheReadTokens)}
+              </span>
+              <span title={tUsage("cacheWrite")}>
+                ⚡w{formatCompactTokens(metrics.cacheWriteTokens)}
+              </span>
+              <span title={tUsage("cacheHitCaption")}>
+                ⚡
+                {metrics.cacheHitRate == null
+                  ? "--"
+                  : `${Math.round(metrics.cacheHitRate * 100)}%`}
+              </span>
+              <span title={t("duration")}>
+                {metrics.durationMs == null
+                  ? "--"
+                  : `${(metrics.durationMs / 1000).toFixed(1)}s`}
+              </span>
+              <span title={t("throughput")}>
+                {metrics.tokensPerSecond == null
+                  ? "--"
+                  : `${metrics.tokensPerSecond.toFixed(1)}/s`}
+              </span>
+              <span title={t("toolCalls")}>⚙{metrics.toolCalls}</span>
+              <span title={t("toolFailures")}>✗{metrics.toolFailures}</span>
+            </>
           )}
-        </button>
-      </div>
-      {/* The grouped info cards ride with the fold (ReasoningContent only takes
-          a string body), so they appear exactly when the card is expanded. */}
-      {open && (
-        <div className="order-3 mt-1.5 px-1">
-          <MetricCards metrics={metrics} />
+          <button
+            type="button"
+            onClick={handleCopy}
+            title={copied ? tEpisode("copied") : tEpisode("copy")}
+            aria-label={copied ? tEpisode("copied") : tEpisode("copy")}
+            className="ml-auto inline-flex h-4 shrink-0 items-center gap-1 rounded px-1 text-[0.625rem] text-muted-foreground/80 transition-colors hover:text-foreground"
+          >
+            {copied ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </button>
         </div>
-      )}
-      <ReasoningContent className="order-2 mt-1 px-1 text-[0.8125rem] leading-relaxed">
+        {settled && (
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-muted-foreground/60">
+            {metrics.model && (
+              <span className="max-w-full truncate" title={metrics.model}>
+                {metrics.model}
+              </span>
+            )}
+            <span title={t("thinkingOfReply")}>
+              {metrics.thinkingCharShare == null
+                ? "--"
+                : `${Math.round(metrics.thinkingCharShare * 100)}% ${t("approx")}`}
+            </span>
+            <span
+              className="tabular-nums"
+              title={`${t("startedAt")} / ${t("completedAt")}`}
+            >
+              {formatClock(metrics.startedAt) ?? "--"} →{" "}
+              {formatClock(metrics.completedAt) ?? "--"}
+            </span>
+          </div>
+        )}
+      </div>
+      <ReasoningContent
+        className={cn(
+          "order-2 mt-1 px-1 text-xs leading-relaxed",
+          // Thinking flows are multi-paragraph by nature (~7 segments a block,
+          // 96% blank-line separated) — a tighter rhythm than Streamdown's
+          // default keeps a long block scannable.
+          "[&_p]:my-1.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0",
+          // Lists show up in about two thirds of blocks; inside markers keep
+          // them readable in this narrow panel (same call as the tool cards).
+          "[&_ul]:my-1.5 [&_ul]:list-inside [&_ol]:my-1.5 [&_ol]:list-inside [&_li]:my-0.5",
+          // Inline code (76% of blocks: paths, commands) must wrap — a long
+          // path otherwise overflows the panel. A <p>/<li> can only contain
+          // inline code, so fenced blocks are never touched.
+          "[&_p_code]:break-words [&_li_code]:break-words"
+        )}
+      >
         {text}
       </ReasoningContent>
     </Reasoning>
@@ -1420,36 +1384,37 @@ export function ThinkingTab() {
               paint of episodes scrolled out of view (native virtualization);
               `contain-intrinsic-size` keeps the scrollbar and the tail-follow
               honest by remembering each episode's real height once rendered. */}
-            <ol className="relative ml-[3.5rem] border-l border-border/70 pt-2 pb-1 pr-3">
+            <ol className="relative ml-1.5 border-l border-border/70 pt-2 pb-1 pr-1">
               {segments.map((segment, index) => {
-                const clock = formatClock(segment.at)
                 const isLatest = index === segments.length - 1
                 return (
                   <li
                     key={segment.key}
                     data-thinking-episode={segment.episode}
-                    className="relative ml-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-1 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]"
+                    className="relative ml-4 pb-3 last:pb-0 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]"
                   >
-                    {/* Timeline gutter: the clock is the axis label, pinned to
-                        the rail (right-aligned) at the row's top line. */}
-                    <time className="absolute -left-14 top-1 w-10 shrink-0 text-right font-mono text-[0.625rem] tabular-nums text-muted-foreground/60">
-                      {clock ?? ""}
-                    </time>
                     <span
                       aria-hidden
                       className={cn(
-                        "absolute -left-[23px] top-1 size-3 rounded-full border-2 border-background",
+                        "absolute -left-[23px] top-1.5 size-3 rounded-full border-2 border-background",
                         segment.live ? "bg-primary" : "bg-muted-foreground/40"
                       )}
                     />
-                    <ThinkingEpisode
-                      text={segment.text}
-                      live={segment.live}
-                      open={episodeOpen(segment.key, isLatest)}
-                      onOpenChange={(open) => setEpisodeOpen(segment.key, open)}
-                      episode={segment.episode}
-                      metrics={segment.metrics}
-                    />
+                    {/* Episode card, same shape as the Releases timeline's. */}
+                    <div className="rounded-2xl border border-border/70 bg-muted/40 px-2 py-1.5">
+                      <ThinkingEpisode
+                        text={segment.text}
+                        live={segment.live}
+                        settled={segment.settled}
+                        open={episodeOpen(segment.key, isLatest)}
+                        onOpenChange={(open) =>
+                          setEpisodeOpen(segment.key, open)
+                        }
+                        episode={segment.episode}
+                        at={segment.at}
+                        metrics={segment.metrics}
+                      />
+                    </div>
                   </li>
                 )
               })}

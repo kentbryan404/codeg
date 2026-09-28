@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  useSyncExternalStore,
   type ComponentType,
   type ReactNode,
 } from "react"
@@ -40,6 +41,12 @@ import {
 import { AppTitleBar } from "@/components/layout/app-title-bar"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer"
+
+/** Runtime environment as an external store for `useSyncExternalStore`. */
+const subscribeEnvironment = () => () => {}
+const getClientEnvironment = (): TransportEnvironment => detectEnvironment()
+/** What SSR produced — the nav must hydrate against exactly this. */
+const getServerEnvironment = (): TransportEnvironment => "web"
 
 interface SettingsNavItem {
   href: string
@@ -222,7 +229,19 @@ export function SettingsShell({ children }: SettingsShellProps) {
     [router, setNavOpen]
   )
 
-  const filteredNavItems = settingsNavItemsFor(detectEnvironment())
+  // The nav is environment-dependent (the web client hides the Web service
+  // page), and `detectEnvironment()` answers "web" during SSR — so resolving it
+  // DURING render made the first client render (a Tauri window: "tauri", with
+  // one more item) disagree with the server HTML and React tore the tree down
+  // as a hydration mismatch. `useSyncExternalStore` gives React both answers:
+  // the server snapshot for hydration, then a client re-check right after —
+  // identical first paint, then the normal update.
+  const transportEnv = useSyncExternalStore(
+    subscribeEnvironment,
+    getClientEnvironment,
+    getServerEnvironment
+  )
+  const filteredNavItems = settingsNavItemsFor(transportEnv)
 
   const navContent = (
     <div className="flex min-h-0 flex-1 flex-col">

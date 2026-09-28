@@ -79,6 +79,33 @@ describe("collectThinkingSegments", () => {
     expect(segments.map((s) => s.live)).toEqual([false, true])
   })
 
+  it("gates stats on settled: streaming AND in-flight persisted rounds stay unsettled", () => {
+    // `persisted` is not proof of completion — a passive viewer reads a round
+    // the backend still marks in flight, and its stats must stay hidden too.
+    const watching = entry(
+      "watching",
+      assistantTurn("t3", [{ type: "thinking", text: "passive" }]),
+      "persisted"
+    )
+    watching.isInFlightRound = true
+
+    const segments = collectThinkingSegments([
+      entry(
+        "done",
+        assistantTurn("t1", [{ type: "thinking", text: "settled" }]),
+        "persisted"
+      ),
+      entry(
+        "live",
+        assistantTurn("t2", [{ type: "thinking", text: "still writing" }]),
+        "streaming"
+      ),
+      watching,
+    ])
+
+    expect(segments.map((s) => s.settled)).toEqual([true, false, false])
+  })
+
   it("drops blank blocks without renumbering later siblings", () => {
     // A model emits empty thinking blocks as separators; the skipped block's
     // slot must not shift its siblings' keys (a later delta filling it in

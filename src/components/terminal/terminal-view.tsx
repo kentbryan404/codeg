@@ -1,7 +1,13 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { subscribe } from "@/lib/platform"
+import { isDesktop } from "@/lib/platform"
+import {
+  hasFileTreeDragType,
+  readFileTreeDragPayload,
+} from "@/lib/file-tree-dnd"
+import { pointWithinElement } from "@/components/chat/composer/attachment-files"
 import {
   terminalSpawn,
   terminalSnapshot,
@@ -43,6 +49,17 @@ function computeTerminalFontSize(base: number, zoomLevel: number): number {
 }
 
 type DisposableAddon = ITerminalAddon & { dispose: () => void }
+
+/**
+ * Shell-quote a path for typing into a terminal: bare when it only holds
+ * characters a shell never splits on, single-quoted otherwise (POSIX quoting;
+ * an embedded quote becomes `'\''`).
+ */
+function quoteShellPath(path: string): string {
+  return /^[A-Za-z0-9_./:@%+=,-]+$/.test(path)
+    ? path
+    : `'${path.replace(/'/g, "'\\''")}'`
+}
 
 /** 惰性加载 @xterm/addon-ligatures（仅终端连字需要，且对系统字体可能无效）。 */
 async function enableTerminalLigatures(
@@ -648,6 +665,59 @@ export function TerminalView({
     }
   }, [terminalLigatures])
 
+  // Type a dropped entry's ABSOLUTE PATH into the terminal, as if the user
+  // typed it (shell-quoted when needed) plus a trailing space. Shared by the OS
+  // drop and the in-app file-tree drop below — they arrive through different
+  // channels (Tauri window event vs HTML5 DnD) but must behave identically.
+  const writeDroppedPaths = useCallback(
+    (paths: string[]) => {
+      if (!terminalId || paths.length === 0) return
+      const text = paths.map(quoteShellPath).join(" ") + " "
+      void terminalWrite(terminalId, text).catch((error) => {
+        console.error("[Terminal] drop path failed:", error)
+      })
+    },
+    [terminalId]
+  )
+
+  // OS file drop → type the file's ABSOLUTE PATH into the terminal, as if the
+  // user typed it (shell-quoted when it needs it) plus a trailing space, so a
+  // dropped file composes with whatever the command line already holds.
+  //
+  // Tauri delivers drag-drop as WINDOW events, not DOM events on the element,
+  // so the position must decide whose drop it is — same contract as the
+  // composer's attachments.
+  useEffect(() => {
+    if (!isDesktop() || !terminalId) return
+    let cancelled = false
+    let unlisten: (() => void) | null = null
+
+    void (async () => {
+      const { getCurrentWebview } = await import("@tauri-apps/api/webview")
+      const { TauriEvent } = await import("@tauri-apps/api/event")
+      const handle = await getCurrentWebview().listen<{
+        paths: string[]
+        position: { x: number; y: number }
+      }>(TauriEvent.DRAG_DROP, (event) => {
+        if (cancelled) return
+        const host = containerRef.current
+        if (!host) return
+        if (!pointWithinElement(event.payload.position, host)) return
+        writeDroppedPaths(event.payload.paths ?? [])
+      })
+      if (cancelled) {
+        void handle()
+        return
+      }
+      unlisten = handle
+    })()
+
+    return () => {
+      cancelled = true
+      unlisten?.()
+    }
+  }, [terminalId, writeDroppedPaths])
+
   return (
     <div
       className="absolute inset-0 h-full w-full p-2"
@@ -675,7 +745,25 @@ export function TerminalView({
             : undefined
         }
       >
-        <div ref={containerRef} className="min-h-0 flex-1" />
+        <div
+          ref={containerRef}
+          className="min-h-0 flex-1"
+          // In-app drags (the file tree) are HTML5 DnD, NOT the OS drop Tauri
+          // reports as a window event — without these the terminal ignored
+          // them entirely. `dragover` must preventDefault or the drop is never
+          // delivered.
+          onDragOver={(event) => {
+            if (!hasFileTreeDragType(event.dataTransfer)) return
+            event.preventDefault()
+            event.dataTransfer.dropEffect = "copy"
+          }}
+          onDrop={(event) => {
+            const payload = readFileTreeDragPayload(event.dataTransfer)
+            if (!payload) return
+            event.preventDefault()
+            writeDroppedPaths([payload.absPath])
+          }}
+        />
         {showKeybar && (
           <TermKeybar
             mods={modsUi}
