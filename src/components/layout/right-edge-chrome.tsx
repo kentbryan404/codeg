@@ -10,6 +10,7 @@ import { useAuxPanelContext } from "@/contexts/aux-panel-context"
 import { useTerminalContext } from "@/contexts/terminal-context"
 import { useWorkbenchRoute } from "@/contexts/workbench-route-context"
 import { WorkbenchRouteChromeActions } from "@/components/workbench/workbench-content"
+import { UpstreamReleases } from "@/components/layout/upstream-releases"
 import { useIsActiveChatMode } from "@/hooks/use-is-active-chat-mode"
 import { useIsMac } from "@/hooks/use-is-mac"
 import { useShortcutSettings } from "@/hooks/use-shortcut-settings"
@@ -74,6 +75,7 @@ export function RightEdgeChrome() {
             >
               <SquareTerminal className="h-3.5 w-3.5" />
             </Button>
+            <UpstreamReleases />
             <Button
               variant="ghost"
               size="icon"

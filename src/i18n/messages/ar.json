@@ -1786,6 +1786,19 @@
       "importFailed": "فشل الاستيراد: {message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "إصدارات المنبع",
+    "title": "إصدارات المنبع",
+    "loading": "جارٍ تحميل الإصدارات…",
+    "error": "تعذّر تحميل الإصدارات.",
+    "retry": "إعادة المحاولة",
+    "empty": "لا توجد إصدارات بعد.",
+    "latest": "الأحدث",
+    "prerelease": "إصدار تجريبي",
+    "noNotes": "لا توجد ملاحظات إصدار.",
+    "viewOnGitHub": "عرض على GitHub",
+    "openReleasesPage": "فتح صفحة الإصدارات"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "التحديثات الفورية غير متاحة",

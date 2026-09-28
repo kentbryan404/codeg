@@ -39,23 +39,23 @@ describe("resolveAuxTabView", () => {
 })
 
 describe("shouldCollapseAuxTabs", () => {
-  // rightReserve mirrors rightChromeReserve(): 116 on macOS/web (chrome only),
-  // 254 on desktop Windows/Linux (chrome 116 + native caption 138).
-  const MAC_WEB_RESERVE = 116
-  const WIN_LINUX_RESERVE = 254
+  // rightReserve mirrors rightChromeReserve(): 156 on macOS/web (chrome only),
+  // 294 on desktop Windows/Linux (chrome 156 + native caption 138).
+  const MAC_WEB_RESERVE = 156
+  const WIN_LINUX_RESERVE = 294
 
   it("keeps the segmented control when the panel has room", () => {
-    // 320 − 12 gutter − 116 = 192 available ≥ 130 control + 12 gap.
+    // 320 − 12 gutter − 156 = 152 available ≥ 130 control + 12 gap.
     expect(shouldCollapseAuxTabs(320, MAC_WEB_RESERVE)).toBe(false)
   })
 
   it("collapses once the panel is too narrow for the control", () => {
-    // 220 − 12 − 116 = 92 available < 142.
+    // 220 − 12 − 156 = 52 available < 142.
     expect(shouldCollapseAuxTabs(220, MAC_WEB_RESERVE)).toBe(true)
   })
 
   it("collapses at the default width when the win/linux caption is reserved", () => {
-    // 320 − 12 − 254 = 54 available < 142: the wider reservation forces a
+    // 320 − 12 − 294 = 14 available < 142: the wider reservation forces a
     // collapse the mac/web layout wouldn't at the same width.
     expect(shouldCollapseAuxTabs(320, WIN_LINUX_RESERVE)).toBe(true)
     expect(shouldCollapseAuxTabs(320, MAC_WEB_RESERVE)).toBe(false)

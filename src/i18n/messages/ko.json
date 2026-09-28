@@ -1786,6 +1786,19 @@
       "importFailed": "가져오기 실패: {message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "업스트림 릴리스",
+    "title": "업스트림 릴리스",
+    "loading": "릴리스 불러오는 중…",
+    "error": "릴리스를 불러오지 못했습니다.",
+    "retry": "다시 시도",
+    "empty": "아직 릴리스가 없습니다.",
+    "latest": "최신",
+    "prerelease": "사전 릴리스",
+    "noNotes": "릴리스 노트가 없습니다.",
+    "viewOnGitHub": "GitHub에서 보기",
+    "openReleasesPage": "릴리스 페이지 열기"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "실시간 업데이트를 사용할 수 없음",

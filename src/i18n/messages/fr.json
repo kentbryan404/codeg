@@ -1786,6 +1786,19 @@
       "importFailed": "Échec de l'import : {message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "Versions upstream",
+    "title": "Versions upstream",
+    "loading": "Chargement des versions…",
+    "error": "Impossible de charger les versions.",
+    "retry": "Réessayer",
+    "empty": "Aucune version pour l'instant.",
+    "latest": "Dernière",
+    "prerelease": "Pré-version",
+    "noNotes": "Aucune note de version.",
+    "viewOnGitHub": "Voir sur GitHub",
+    "openReleasesPage": "Ouvrir la page des versions"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "Mises à jour en temps réel indisponibles",

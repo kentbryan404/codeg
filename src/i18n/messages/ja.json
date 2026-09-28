@@ -1786,6 +1786,19 @@
       "importFailed": "インポートに失敗しました: {message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "上流のリリース",
+    "title": "上流のリリース",
+    "loading": "リリースを読み込み中…",
+    "error": "リリースを読み込めませんでした。",
+    "retry": "再試行",
+    "empty": "リリースはまだありません。",
+    "latest": "最新",
+    "prerelease": "プレリリース",
+    "noNotes": "リリースノートはありません。",
+    "viewOnGitHub": "GitHub で見る",
+    "openReleasesPage": "リリースページを開く"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "リアルタイム更新は利用できません",

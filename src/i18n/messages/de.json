@@ -1786,6 +1786,19 @@
       "importFailed": "Import fehlgeschlagen: {message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "Upstream-Releases",
+    "title": "Upstream-Releases",
+    "loading": "Releases werden geladen…",
+    "error": "Releases konnten nicht geladen werden.",
+    "retry": "Erneut versuchen",
+    "empty": "Noch keine Releases.",
+    "latest": "Neueste",
+    "prerelease": "Vorabversion",
+    "noNotes": "Keine Release-Notes.",
+    "viewOnGitHub": "Auf GitHub ansehen",
+    "openReleasesPage": "Release-Seite öffnen"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "Live-Aktualisierungen nicht verfügbar",

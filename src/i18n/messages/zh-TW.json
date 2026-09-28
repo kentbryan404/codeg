@@ -1786,6 +1786,19 @@
       "importFailed": "匯入失敗：{message}"
     }
   },
+  "UpstreamReleases": {
+    "buttonTitle": "上游版本",
+    "title": "上游版本更新",
+    "loading": "正在載入版本…",
+    "error": "載入版本失敗。",
+    "retry": "重試",
+    "empty": "尚無版本。",
+    "latest": "最新",
+    "prerelease": "預先發佈",
+    "noNotes": "尚無更新說明。",
+    "viewOnGitHub": "在 GitHub 檢視",
+    "openReleasesPage": "開啟版本發佈頁"
+  },
   "Folder": {
     "workspaceStatus": {
       "degradedTitle": "即時更新不可用",
