@@ -76,9 +76,9 @@ const ROOT_ENV: &str = "CODEG_ACP_TMP_ROOT";
 /// to keep for codeg's OWN broker socket. One definition rather than two
 /// because [`tests::sun_path_cap_matches_the_kernel`] checks this one against
 /// `libc`, and a second copy would be a number nothing verifies.
-#[cfg(any(target_os = "linux", target_os = "android"))]
+#[cfg(target_os = "linux")]
 pub(crate) const SUN_PATH_CAP: usize = 108;
-#[cfg(all(unix, not(any(target_os = "linux", target_os = "android"))))]
+#[cfg(all(unix, not(target_os = "linux")))]
 pub(crate) const SUN_PATH_CAP: usize = 104;
 
 /// The longest name [`new_dir_name`] can mint: ten digits of `u32` pid, the

@@ -36,26 +36,34 @@ describe("resolveAuxTabView", () => {
       "session_details"
     )
   })
+
+  it("keeps a Releases selection without a folder (not folder-scoped)", () => {
+    expect(resolveAuxTabView("releases", null, false)).toEqual({
+      showFolderTabs: false,
+      effectiveTab: "releases",
+    })
+    expect(resolveAuxTabView("releases", 1, true).effectiveTab).toBe("releases")
+  })
 })
 
 describe("shouldCollapseAuxTabs", () => {
-  // rightReserve mirrors rightChromeReserve(): 156 on macOS/web (chrome only),
-  // 294 on desktop Windows/Linux (chrome 156 + native caption 138).
-  const MAC_WEB_RESERVE = 156
-  const WIN_LINUX_RESERVE = 294
+  // rightReserve mirrors rightChromeReserve(): 128 on macOS/web (chrome only),
+  // 266 on desktop Windows/Linux (chrome 128 + native caption 138).
+  const MAC_WEB_RESERVE = 128
+  const WIN_LINUX_RESERVE = 266
 
   it("keeps the segmented control when the panel has room", () => {
-    // 320 − 12 gutter − 156 = 152 available ≥ 130 control + 12 gap.
+    // 320 − 12 gutter − 128 = 180 available ≥ 162 control + 12 gap.
     expect(shouldCollapseAuxTabs(320, MAC_WEB_RESERVE)).toBe(false)
   })
 
   it("collapses once the panel is too narrow for the control", () => {
-    // 220 − 12 − 156 = 52 available < 142.
+    // 220 − 12 − 128 = 80 available < 174.
     expect(shouldCollapseAuxTabs(220, MAC_WEB_RESERVE)).toBe(true)
   })
 
   it("collapses at the default width when the win/linux caption is reserved", () => {
-    // 320 − 12 − 294 = 14 available < 142: the wider reservation forces a
+    // 320 − 12 − 266 = 42 available < 174: the wider reservation forces a
     // collapse the mac/web layout wouldn't at the same width.
     expect(shouldCollapseAuxTabs(320, WIN_LINUX_RESERVE)).toBe(true)
     expect(shouldCollapseAuxTabs(320, MAC_WEB_RESERVE)).toBe(false)

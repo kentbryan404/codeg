@@ -174,6 +174,13 @@
       "sectionTitle": "모드 선택 영역",
       "sectionDescription": "새 대화 페이지에서 입력창 위에 표시되는 '코드 개발 / 일상 업무' 바로가기 카드입니다.",
       "showQuickActions": "새 대화 페이지에 표시"
+    },
+    "contentWidth": {
+      "sectionTitle": "콘텐츠 너비",
+      "sectionDescription": "대화의 가운데 콘텐츠 영역(메시지, 입력창, 환영 페이지) 너비입니다. '기본'은 읽기 좋은 너비로 가운데 정렬하고, '전체 너비'는 패널 가장자리까지 늘립니다.",
+      "placeholder": "콘텐츠 너비 선택",
+      "default": "기본",
+      "full": "전체 너비"
     }
   },
   "SystemSettings": {
@@ -1797,7 +1804,12 @@
     "prerelease": "사전 릴리스",
     "noNotes": "릴리스 노트가 없습니다.",
     "viewOnGitHub": "GitHub에서 보기",
-    "openReleasesPage": "릴리스 페이지 열기"
+    "openReleasesPage": "릴리스 페이지 열기",
+    "compareVsMaster": "{branch}와 비교",
+    "compareAhead": "{count} 앞섬",
+    "compareBehind": "{count} 뒤짐",
+    "compareFiles": "파일 {count}개",
+    "compareIdentical": "{branch}과 일치"
   },
   "Folder": {
     "workspaceStatus": {

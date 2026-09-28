@@ -82,7 +82,7 @@ the scheme owner and then started empty.
   never gets from the installer. Debug builds are skipped so a dev run cannot
   take the scheme away from an installed Codeg.
 
-Not available in `codeg-server` / browser-only mode — use the
+Not available in browser-only mode — use the
 `/workspace?folderId=&conversationId=&agent=` query string there.
 
 [tauri#15928]: https://github.com/tauri-apps/tauri/issues/15928

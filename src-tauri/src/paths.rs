@@ -176,9 +176,23 @@ pub fn codeg_acp_transcripts_root() -> PathBuf {
 /// operator pre-set `CODEG_DATA_DIR` to a custom location.
 pub fn resolve_effective_data_dir(tauri_fallback: &Path) -> PathBuf {
     if let Some(custom) = std::env::var_os("CODEG_DATA_DIR").filter(|s| !s.is_empty()) {
-        return crate::git_credential::absolutize(Path::new(&custom));
+        return absolutize(Path::new(&custom));
     }
-    crate::git_credential::absolutize(tauri_fallback)
+    absolutize(tauri_fallback)
+}
+
+/// Make a path absolute without requiring it to exist on disk. Falls back
+/// to the original path if the current directory is unreadable.
+///
+/// Lives in the path layer rather than `git_credential` so `paths` (a
+/// foundation module) has no edge back up to the credential layer.
+pub fn absolutize(p: &Path) -> PathBuf {
+    if p.is_absolute() {
+        return p.to_path_buf();
+    }
+    std::env::current_dir()
+        .map(|cwd| cwd.join(p))
+        .unwrap_or_else(|_| p.to_path_buf())
 }
 
 /// Drop the Windows extended-length ("verbatim") prefix from a path, so the

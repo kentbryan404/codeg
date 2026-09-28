@@ -174,6 +174,13 @@
       "sectionTitle": "Mode selection area",
       "sectionDescription": "The Code Development / Office Work shortcut cards shown above the composer on the new conversation page.",
       "showQuickActions": "Show on the new conversation page"
+    },
+    "contentWidth": {
+      "sectionTitle": "Content width",
+      "sectionDescription": "Width of the conversation's central content area (messages, input, welcome page). Default centres it on a comfortable reading width; Full width stretches it to the panel edges.",
+      "placeholder": "Select content width",
+      "default": "Default",
+      "full": "Full width"
     }
   },
   "SystemSettings": {
@@ -1797,7 +1804,12 @@
     "prerelease": "Pre-release",
     "noNotes": "No release notes.",
     "viewOnGitHub": "View on GitHub",
-    "openReleasesPage": "Open the releases page"
+    "openReleasesPage": "Open the releases page",
+    "compareVsMaster": "vs {branch}",
+    "compareAhead": "{count} ahead",
+    "compareBehind": "{count} behind",
+    "compareFiles": "{count, plural, one {# file} other {# files}}",
+    "compareIdentical": "Matches {branch}"
   },
   "Folder": {
     "workspaceStatus": {

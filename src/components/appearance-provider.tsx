@@ -32,6 +32,7 @@ import {
   STORAGE_KEY_THEME_COLOR,
   STORAGE_KEY_ZOOM_LEVEL,
   STORAGE_KEY_WELCOME_QUICK_ACTIONS,
+  STORAGE_KEY_CONTENT_FULL_WIDTH,
   STORAGE_KEY_UI_FONT,
   STORAGE_KEY_UI_FONT_CUSTOM,
   STORAGE_KEY_UI_FONT_STACK,
@@ -92,6 +93,9 @@ type AppearanceContextValue = {
   /** 新会话欢迎页是否显示「模式选择区域」（QuickActions 快捷卡片），默认开启 */
   showWelcomeQuickActions: boolean
   setShowWelcomeQuickActions: (on: boolean) => void
+  /** 会话中间内容列（消息流 / 输入框 / 欢迎页 / 横幅）是否全宽显示，默认关闭 */
+  contentFullWidth: boolean
+  setContentFullWidth: (on: boolean) => void
   /** 界面字体（普通组件，驱动 --font-sans） */
   uiFont: FontSelection
   setUiFont: (id: string, custom?: string) => void
@@ -291,6 +295,12 @@ export function AppearanceProvider({
   const [showWelcomeQuickActions, setShowWelcomeQuickActionsState] =
     useState<boolean>(() => readBool(STORAGE_KEY_WELCOME_QUICK_ACTIONS, true))
 
+  // 内容列全宽：默认关闭。视觉由 <html data-content-width> 驱动，inline 脚本已
+  // 在第一帧前就位，这里读 localStorage 只回填控件选中态。
+  const [contentFullWidth, setContentFullWidthState] = useState<boolean>(() =>
+    readBool(STORAGE_KEY_CONTENT_FULL_WIDTH, false)
+  )
+
   // 字体偏好的初始值从 localStorage 读 id/custom（视觉已由 inline 脚本就位，
   // 这里只是回填选中态，不会造成闪烁）。
   const [uiFont, setUiFontState] = useState<FontSelection>(() =>
@@ -395,6 +405,20 @@ export function AppearanceProvider({
     setShowWelcomeQuickActionsState(on)
     persist(STORAGE_KEY_WELCOME_QUICK_ACTIONS, on ? "1" : "0")
   }, [])
+
+  const setContentFullWidth = useCallback((on: boolean) => {
+    setContentFullWidthState(on)
+    persist(STORAGE_KEY_CONTENT_FULL_WIDTH, on ? "1" : "0")
+  }, [])
+
+  // 把全宽开关落到 <html> 的 data-content-width 上：CSS 只认这一个属性，组件无需
+  // 感知该偏好即可热更新；跨窗口同步（storage 事件改 state）也会经由本 effect 生效。
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      "data-content-width",
+      contentFullWidth ? "full" : "default"
+    )
+  }, [contentFullWidth])
 
   const setUiFont = useCallback((id: string, custom = "") => {
     setUiFontState({ id, custom })
@@ -701,6 +725,12 @@ export function AppearanceProvider({
           readBool(STORAGE_KEY_WELCOME_QUICK_ACTIONS, true)
         )
       }
+      // 同上：属性由 effect 写，这里只同步 state。
+      if (e.key === STORAGE_KEY_CONTENT_FULL_WIDTH) {
+        setContentFullWidthState(
+          readBool(STORAGE_KEY_CONTENT_FULL_WIDTH, false)
+        )
+      }
       if (e.key && FONT_KEYS.has(e.key)) {
         rehydrateFonts()
       }
@@ -749,6 +779,8 @@ export function AppearanceProvider({
         setZoomLevel,
         showWelcomeQuickActions,
         setShowWelcomeQuickActions,
+        contentFullWidth,
+        setContentFullWidth,
         uiFont,
         setUiFont,
         editorFont,

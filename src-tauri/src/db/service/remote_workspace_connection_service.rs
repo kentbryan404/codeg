@@ -153,7 +153,7 @@ pub async fn create(
         .one(conn)
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .map(|m| m.sort_order)
         .unwrap_or(-1);
     let active = remote_workspace_connection::ActiveModel {
@@ -170,7 +170,7 @@ pub async fn create(
         .insert(conn)
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     Ok(to_info(model))
 }
 
@@ -187,7 +187,7 @@ pub async fn update(
         .one(conn)
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| AppCommandError::not_found(format!("Remote connection {id} not found")))?;
 
     let mut active = row.into_active_model();
@@ -200,7 +200,7 @@ pub async fn update(
         .update(conn)
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     Ok(to_info(model))
 }
 
@@ -227,7 +227,7 @@ pub async fn reorder(conn: &DatabaseConnection, ids: Vec<i32>) -> Result<(), App
         .all(conn)
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     let existing_ids = rows.iter().map(|row| row.id).collect::<HashSet<_>>();
     if existing_ids != unique_ids {
         return Err(AppCommandError::invalid_input(
@@ -244,7 +244,7 @@ pub async fn reorder(conn: &DatabaseConnection, ids: Vec<i32>) -> Result<(), App
         .begin()
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     for (idx, id) in ids.into_iter().enumerate() {
         let Some(row) = rows_by_id.remove(&id) else {
             return Err(AppCommandError::invalid_input(
@@ -258,12 +258,12 @@ pub async fn reorder(conn: &DatabaseConnection, ids: Vec<i32>) -> Result<(), App
             .update(&txn)
             .await
             .map_err(DbError::from)
-            .map_err(AppCommandError::db)?;
+            .map_err(AppCommandError::from)?;
     }
     txn.commit()
         .await
         .map_err(DbError::from)
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
 
     Ok(())
 }

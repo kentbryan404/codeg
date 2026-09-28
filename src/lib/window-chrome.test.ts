@@ -17,8 +17,8 @@ import {
 // clearance, Windows/Linux caption strip) stay fixed.
 describe("window-chrome zoom scaling", () => {
   it("defaults to 100% (no scaling) and matches the pre-zoom baseline", () => {
-    // Baseline the aux-panel collapse test also hard-codes: 156 (mac/web) and
-    // 156 + 138 = 294 (win/linux caption reserved).
+    // Baseline the aux-panel collapse test also hard-codes: 128 (mac/web) and
+    // 128 + 138 = 266 (win/linux caption reserved).
     expect(rightChromeReserve(false)).toBe(RIGHT_CHROME_CLUSTER)
     expect(rightChromeReserve(true)).toBe(
       RIGHT_CHROME_CLUSTER + WINDOW_CAPTION_WIDTH
@@ -31,19 +31,19 @@ describe("window-chrome zoom scaling", () => {
   })
 
   it("scales only the button cluster at 150%, leaving native insets fixed", () => {
-    // 156 → 234, 80 → 120.
-    expect(rightChromeClusterWidth(150)).toBe(234)
-    expect(rightChromeReserve(false, 150)).toBe(234)
+    // 128 → 192, 80 → 120.
+    expect(rightChromeClusterWidth(150)).toBe(192)
+    expect(rightChromeReserve(false, 150)).toBe(192)
     // Native caption strip stays 138.
-    expect(rightChromeReserve(true, 150)).toBe(234 + WINDOW_CAPTION_WIDTH)
+    expect(rightChromeReserve(true, 150)).toBe(192 + WINDOW_CAPTION_WIDTH)
     // Native traffic-light inset stays 76; only the 80 cluster scales to 120.
     expect(leftChromeReserve(false, 150)).toBe(120)
     expect(leftChromeReserve(true, 150)).toBe(MAC_TRAFFIC_LIGHT_INSET + 120)
   })
 
   it("scales the cluster down below 100% too and rounds to whole pixels", () => {
-    // 156 * 0.9 = 140.4 → 140 (rounded).
-    expect(rightChromeClusterWidth(90)).toBe(140)
+    // 128 * 0.9 = 115.2 → 115 (rounded).
+    expect(rightChromeClusterWidth(90)).toBe(115)
     // 80 * 0.5 = 40, plus the fixed 76 inset.
     expect(leftChromeReserve(true, 50)).toBe(MAC_TRAFFIC_LIGHT_INSET + 40)
   })

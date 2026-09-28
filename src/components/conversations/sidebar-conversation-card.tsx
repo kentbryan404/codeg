@@ -30,6 +30,7 @@ import type { DbConversationSummary, ConversationStatus } from "@/lib/types"
 import { STATUS_ORDER } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { formatConversationTitle } from "@/lib/conversation-title"
+import { useAppWorkspaceStore } from "@/stores/app-workspace-store"
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -311,6 +312,15 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
   // hand-toggling its status doesn't fit — its lifecycle is the sub-agent's. The
   // time / running badge then stays visible on hover (nothing swaps in for it).
   const isSubsession = conversation.parent_id != null
+  // The branch this row runs on, shown as a muted suffix. Same precedence as the
+  // hover bubble (`SidebarConversationHoverDetails`): the branch the session
+  // STARTED on wins, and the folder's live HEAD covers rows that predate the
+  // column (imported sessions). Subscribing per row is fine — the selector reads
+  // one folder's entry, so only a change to THIS branch re-renders the card.
+  const liveBranch = useAppWorkspaceStore((s) =>
+    s.branches.get(conversation.folder_id)
+  )
+  const branch = conversation.git_branch || liveBranch || null
 
   return (
     <>
@@ -429,6 +439,23 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
                     >
                       {formatConversationTitle(conversation.title) ||
                         t("untitledConversation")}
+                      {/* Branch suffix, inline right after the title (same
+                          single line — no row-height change). `dir="ltr"` because
+                          a branch name is an LTR identifier even under an RTL
+                          document, like the paths in the hover bubble. A long
+                          title truncates the whole line, so the suffix is the
+                          first thing clipped; the full name stays on the row's
+                          hover bubble (`SidebarConversationHoverDetails`). */}
+                      {branch ? (
+                        <span
+                          dir="ltr"
+                          data-branch={branch}
+                          title={branch}
+                          className="ml-1.5 font-mono text-[0.71875rem] text-muted-foreground/70"
+                        >
+                          {branch}
+                        </span>
+                      ) : null}
                     </span>
                     {/* Re-parented out of a removed worktree: history loads fine,
                     but "continue" may need a fresh session (the agent's files

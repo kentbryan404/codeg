@@ -174,6 +174,13 @@
       "sectionTitle": "Área de seleção de modo",
       "sectionDescription": "Os cartões de atalho «Desenvolvimento / Escritório» exibidos acima do campo de entrada na página de nova conversa.",
       "showQuickActions": "Mostrar na página de nova conversa"
+    },
+    "contentWidth": {
+      "sectionTitle": "Largura do conteúdo",
+      "sectionDescription": "Largura da área central da conversa (mensagens, campo de entrada, página de boas-vindas). «Padrão» centraliza numa largura de leitura confortável; «Largura total» estende até as bordas do painel.",
+      "placeholder": "Selecionar largura do conteúdo",
+      "default": "Padrão",
+      "full": "Largura total"
     }
   },
   "SystemSettings": {
@@ -1797,7 +1804,12 @@
     "prerelease": "Pré-lançamento",
     "noNotes": "Sem notas da versão.",
     "viewOnGitHub": "Ver no GitHub",
-    "openReleasesPage": "Abrir a página de versões"
+    "openReleasesPage": "Abrir a página de versões",
+    "compareVsMaster": "vs {branch}",
+    "compareAhead": "{count} à frente",
+    "compareBehind": "{count} atrás",
+    "compareFiles": "{count, plural, one {# arquivo} other {# arquivos}}",
+    "compareIdentical": "Igual a {branch}"
   },
   "Folder": {
     "workspaceStatus": {

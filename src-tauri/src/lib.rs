@@ -39,7 +39,6 @@ pub mod paths;
 #[cfg(feature = "tauri-runtime")]
 pub mod preferences;
 pub mod process;
-pub mod supervise;
 mod terminal;
 pub mod turn_timings;
 pub mod update;
@@ -100,7 +99,7 @@ mod tauri_app {
         workspace_state as workspace_state_commands,
     };
     use crate::terminal::manager::TerminalManager;
-    use crate::{db, git_credential, network, paths, process, web};
+    use crate::{db, network, paths, process, web};
     use tauri::Manager;
 
     static APP_QUITTING: AtomicBool = AtomicBool::new(false);
@@ -426,8 +425,11 @@ mod tauri_app {
         unsafe { std::env::remove_var(RENDERING_OVERRIDE_OWNED_ENV) };
     }
 
-    #[cfg_attr(mobile, tauri::mobile_entry_point)]
-    pub fn run() {
+    // The Tauri `Context` is built by the CALLER (the thin `codeg` bin), via
+    // `tauri::generate_context!()` there, so the frontend assets are embedded
+    // into the bin — not this crate. Otherwise every `out/` change would
+    // recompile this giant lib (see the `out/`-tracking in tauri-build).
+    pub fn run(context: tauri::Context) {
         // Ahead of the logging init, which is otherwise the first statement
         // here: `init_desktop` builds a `tracing_appender::non_blocking` file
         // writer, and that spawns a worker thread. `set_var` is UB once any
@@ -625,7 +627,7 @@ mod tauri_app {
                 // override": the operator likely meant one of them, but
                 // we don't know which.
                 if let Some(home) = std::env::var_os("CODEG_HOME").filter(|s| !s.is_empty()) {
-                    let home_path = git_credential::absolutize(std::path::Path::new(&home));
+                    let home_path = paths::absolutize(std::path::Path::new(&home));
                     if home_path != effective_data_dir {
                         tracing::warn!(
                             "[paths][WARN] CODEG_HOME ({}) and CODEG_DATA_DIR ({}) point at different roots. \
@@ -653,9 +655,18 @@ mod tauri_app {
                 // persisted `logging.level` now that the DB is open, then wire
                 // the emitter so the Logs viewer's live tail (`logs://appended`)
                 // starts flowing.
-                tauri::async_runtime::block_on(crate::logging::init::apply_persisted_level(
-                    &db.conn,
-                ));
+                // The DB read lives here (the caller owns the handle) so the
+                // logging layer keeps no dependency on the database layer.
+                let persisted_log_settings = tauri::async_runtime::block_on(async {
+                    crate::db::service::app_metadata_service::get_value(
+                        &db.conn,
+                        crate::logging::LOGGING_LEVEL_KEY,
+                    )
+                    .await
+                })
+                .ok()
+                .flatten();
+                crate::logging::init::apply_persisted_settings(persisted_log_settings);
                 if let Some(hub) = crate::logging::hub::log_hub() {
                     hub.set_emitter(crate::web::event_bridge::EventEmitter::Tauri(
                         app.handle().clone(),
@@ -1851,7 +1862,7 @@ mod tauri_app {
                 web::update_web_service_config,
                 web::probe_web_service_port,
             ])
-            .build(tauri::generate_context!())
+            .build(context)
             .expect("error while building tauri application")
             .run(|app, event| match event {
                 tauri::RunEvent::ExitRequested { .. } => {

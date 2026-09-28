@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::db::error::DbError;
-
 // ─── Shared i18n keys ─────────────────────────────────────────────────
 //
 // The wire-format strings that backend errors stamp via `with_i18n` and
@@ -183,11 +181,6 @@ impl AppCommandError {
         self
     }
 
-    pub fn db(err: DbError) -> Self {
-        Self::new(AppErrorCode::DatabaseError, "Database operation failed")
-            .with_detail(err.to_string())
-    }
-
     pub fn invalid_input(message: impl Into<String>) -> Self {
         Self::new(AppErrorCode::InvalidInput, message)
     }
@@ -264,11 +257,5 @@ impl AppCommandError {
 
     pub fn external_command(message: impl Into<String>, detail: impl Into<String>) -> Self {
         Self::new(AppErrorCode::ExternalCommandFailed, message).with_detail(detail)
-    }
-}
-
-impl From<DbError> for AppCommandError {
-    fn from(value: DbError) -> Self {
-        Self::db(value)
     }
 }

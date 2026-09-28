@@ -19,7 +19,7 @@
 
 Codeg（Code Generation）是一個多智慧體編碼工作台：把所有 AI 編碼智慧體收進同一個地方 —— 並讓它們協同工作。
 
-它將所有支援的智慧體 CLI 的工作階段聚合進一個可搜尋的工作區，讓主智慧體在同一個任務內委派給其它類型的子智慧體。不想守著做完的活，可以寫進待辦任務：每個任務待在自己的分支上無人看管地跑，做完了等你驗收才落地。Codeg 可作為桌面應用、獨立伺服器或 Docker 容器執行，還有原生 iOS 與 Android 用戶端，讓你離開電腦後也能接手正在跑的任務；內建十五個智慧體，你也可以自行註冊任何其它相容 ACP 的智慧體。
+它將所有支援的智慧體 CLI 的工作階段聚合進一個可搜尋的工作區，讓主智慧體在同一個任務內委派給其它類型的子智慧體。不想守著做完的活，可以寫進待辦任務：每個任務待在自己的分支上無人看管地跑，做完了等你驗收才落地。Codeg 可作為桌面應用執行；內建十五個智慧體，你也可以自行註冊任何其它相容 ACP 的智慧體。
 
 ![工作區](../images/workspace-light.png#gh-light-mode-only)
 ![工作區](../images/workspace-dark.png#gh-dark-mode-only)
@@ -142,14 +142,6 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 
 **出問題的時候**：回合失敗了不會只說一句「出錯了」—— Claude Code 與 Codex 會說清是哪一類：連線問題、登入問題、額度用盡、請求被拒、服務異常 —— 並在輸入框下方留一條提示，只放真正幫得上忙的按鈕：重試、去登入，或者新建工作階段。智慧體自己在重試時顯示為琥珀色，回合正常結束後收斂成一行「已恢復」。輸入框下面那個連線狀態圖示也是個按鈕：點開就能看到這個工作階段的真實狀態，還有一個會恢復而不是重開的「重新連線」。
 
-## 📱 iPhone、iPad 與 Android
-
-離開電腦，工作也不必停下。原生 iOS 與 Android 用戶端連接的就是你自己在跑的那個 Codeg —— 桌面應用的 **Web 服務**，或者你自己的 `codeg-server` —— 在手機上發起工作階段、看著回覆與工具呼叫即時流回、處理權限審核、瀏覽專案與分支。手機上不會多出任何東西：檔案、智慧體 CLI 與工作階段仍留在執行 Codeg 的那台機器上，存取權杖則交由 iOS Keychain 或 Android Keystore 保管。兩個用戶端皆已開源（[iOS](https://github.com/xintaofei/codeg-ios)、[Android](https://github.com/xintaofei/codeg-android)）；三個步驟即可完成配對，見 [行動應用](https://docs.codeg.app/zh/getting-started/installation#mobile-apps)。
-
-| iPhone 與 iPad | Android |
-| :---: | :---: |
-| <img src="../images/mobile-ios.jpg" alt="在 Codeg iOS 用戶端中發起工作階段" width="248" /> | <img src="../images/mobile-android.jpg" alt="智慧體回覆即時流入 Codeg Android 用戶端" width="248" /> |
-
 ## ✨ 核心亮點
 
 - **[對話聚合](https://docs.codeg.app/zh/guide/aggregation)** — 把所有支援的智慧體的工作階段匯入統一、可搜尋的工作區，並從上次中斷處繼續
@@ -167,41 +159,18 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 - **[專案啟動器](https://docs.codeg.app/zh/guide/project-boot)** — 視覺化建立新專案並即時預覽，建立完直接在工作區開啟
 - **[MCP](https://docs.codeg.app/zh/guide/mcp) & [技能](https://docs.codeg.app/zh/guide/skills)** — 本機伺服器掃描 + 市集搜尋/安裝，技能支援全域與專案層級管理
 - **[外觀自訂](https://docs.codeg.app/zh/reference/settings/appearance)** — 十二套主題都能逐個色彩 token 重新調色、全域設定圓角大小、以 shadcn JSON 匯入匯出主題，或者乾脆自己寫 CSS
-- **[桌面端、伺服器與 Docker](https://docs.codeg.app/zh/getting-started/deployment)** — 原生桌面應用、可用瀏覽器存取的獨立 `codeg-server`，或者 `docker compose up`
-- **[iPhone、iPad 與 Android](https://docs.codeg.app/zh/getting-started/installation#mobile-apps)** — 原生行動用戶端連接你的桌面端或伺服器：隨時隨地發起工作階段、接收串流回覆、核准權限、瀏覽專案
 
 ## 📦 安裝與執行
 
 **桌面端** — 從 [Releases](https://github.com/xintaofei/codeg/releases) 下載 macOS、Windows 或 Linux 的安裝檔，再依 [安裝](https://docs.codeg.app/zh/getting-started/installation) 操作。
 
-**伺服器** — 無介面執行 Codeg，用任意瀏覽器存取。Linux 或 macOS：
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/xintaofei/codeg/main/install.sh | bash
-CODEG_STATIC_DIR=/usr/local/share/codeg/web codeg-server
-```
-
-Windows（PowerShell）：
-
-```powershell
-irm https://raw.githubusercontent.com/xintaofei/codeg/main/install.ps1 | iex
-$env:CODEG_STATIC_DIR="$env:LOCALAPPDATA\codeg\web"; codeg-server
-```
-
-**Docker** — 同一個伺服器，裝進一個容器：
-
-```bash
-docker run -d -p 3080:3080 -v codeg-data:/data ghcr.io/xintaofei/codeg:latest
-```
-
-**行動裝置** — 安裝 [iOS 應用](https://apps.apple.com/app/codeg-client/id6785199071) 或 [Android APK](https://github.com/xintaofei/codeg-android/releases/latest)，再把它指向桌面應用的 **Web 服務**或你自己的 `codeg-server`：填位址、填權杖，完成。配對步驟見 [行動應用](https://docs.codeg.app/zh/getting-started/installation#mobile-apps)。
 
 Compose、預編譯二進位檔、原始碼建置與就地升級見 [部署](https://docs.codeg.app/zh/getting-started/deployment)；環境變數見 [設定](https://docs.codeg.app/zh/getting-started/configuration)。想建置 Codeg 本身：[開發](https://docs.codeg.app/zh/reference/development) 與 [架構](https://docs.codeg.app/zh/reference/architecture)。
 
 ## 🔒 隱私與安全
 
 - 預設本機優先：解析、儲存與專案操作都在本機完成 —— 僅在使用者主動觸發時才存取網路
-- Web 模式與伺服器模式皆使用基於權杖的身分驗證
+- Web 模式使用基於權杖的身分驗證
 - 支援系統代理，適配企業網路環境
 
 詳見 [隱私與安全](https://docs.codeg.app/zh/reference/privacy)。

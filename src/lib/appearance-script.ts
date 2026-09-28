@@ -18,6 +18,12 @@ export const STORAGE_KEY_ZOOM_LEVEL = "codeg-zoom-level"
 // 缺省即回退为开启（保持历史行为）；仅在欢迎态客户端渲染，无需预水合。
 export const STORAGE_KEY_WELCOME_QUICK_ACTIONS = "codeg-welcome-quick-actions"
 
+// 会话中间内容列（消息流 / 输入框 / 欢迎页 / 横幅）是否全宽显示。
+// 缺省关闭（= 居中于 max-w-3xl，保持历史行为）。渲染由 <html> 的
+// data-content-width 属性驱动（见 Provider 与 globals.css），故需要在第一帧前
+// 预水合，避免「居中 → 全宽」的跳变。
+export const STORAGE_KEY_CONTENT_FULL_WIDTH = "codeg-content-full-width"
+
 // 字体偏好（界面 / 编辑器 / 终端）。
 // 只有界面字体需要 *_STACK（已解析的 CSS font-family 栈），供 inline 脚本零依赖地
 // 预水合写入 --font-sans；编辑器/终端字体只走各自的 Monaco/xterm 选项，水合后才挂载，
@@ -78,6 +84,11 @@ const SCRIPT = `
     var storedZoom = parseInt(localStorage.getItem("${STORAGE_KEY_ZOOM_LEVEL}") || "", 10);
     var zoom = VALID_ZOOMS.indexOf(storedZoom) >= 0 ? storedZoom : 100;
     document.documentElement.style.fontSize = (16 * zoom / 100) + "px";
+
+    // 内容列全宽：属性是纯开关，缺省（非 "1"）不写属性即居中，无需回退值。
+    if (localStorage.getItem("${STORAGE_KEY_CONTENT_FULL_WIDTH}") === "1") {
+      document.documentElement.setAttribute("data-content-width", "full");
+    }
 
     // 界面字体：预水合写入 --font-sans（普通组件与会话消息区都跟随它）。
     // stack 只是「显式选择」的缓存，不是偏好本身：仅当存在显式 id（codeg-ui-font）

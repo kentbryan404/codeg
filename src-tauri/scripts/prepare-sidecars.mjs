@@ -23,7 +23,13 @@
 // Windows GitHub runners.
 
 import { execFileSync } from "node:child_process"
-import { existsSync, copyFileSync, mkdirSync, chmodSync } from "node:fs"
+import {
+  existsSync,
+  copyFileSync,
+  mkdirSync,
+  chmodSync,
+  readFileSync,
+} from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import process from "node:process"
@@ -35,6 +41,17 @@ const BIN_NAME = "codeg-mcp"
 
 function log(msg) {
   console.log(`[prepare-sidecars] ${msg}`)
+}
+
+/** True when both files exist and are byte-identical. */
+function sameFile(a, b) {
+  try {
+    const x = readFileSync(a)
+    const y = readFileSync(b)
+    return x.length === y.length && x.equals(y)
+  } catch {
+    return false
+  }
 }
 
 function die(msg) {
@@ -127,13 +144,20 @@ function main() {
 
   mkdirSync(BINARIES_DIR, { recursive: true })
   const dest = join(BINARIES_DIR, `${BIN_NAME}-${target}${ext}`)
-  copyFileSync(built, dest)
-  if (!isWindows) {
-    // copyFileSync preserves modes on POSIX, but be explicit for tarball
-    // sources that may strip the +x bit.
-    chmodSync(dest, 0o755)
+  // Skip when the staged file already matches. A needless copy still bumps the
+  // mtime, and Tauri tracks `bundle.externalBin` (tauri-build, and this crate's
+  // own build.rs), so a no-op touch dirties the giant codeg crate for nothing.
+  if (sameFile(built, dest)) {
+    log(`sidecar unchanged — ${dest} left as is`)
+  } else {
+    copyFileSync(built, dest)
+    if (!isWindows) {
+      // copyFileSync preserves modes on POSIX, but be explicit for tarball
+      // sources that may strip the +x bit.
+      chmodSync(dest, 0o755)
+    }
+    log(`sidecar staged at ${dest}`)
   }
-  log(`sidecar staged at ${dest}`)
 }
 
 main()

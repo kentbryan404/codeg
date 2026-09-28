@@ -13,7 +13,9 @@ default-run = "codeg"
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "codeg_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Desktop-only: `rlib` is all the bins link against. `staticlib`/`cdylib`
+# existed for the (dropped) Tauri mobile targets.
+crate-type = ["rlib"]
 
 [features]
 default = ["tauri-runtime", "browser-child"]
@@ -61,11 +63,6 @@ browser-smoke = []
 name = "codeg"
 path = "src/main.rs"
 required-features = ["tauri-runtime"]
-
-[[bin]]
-name = "codeg-server"
-path = "src/bin/codeg_server.rs"
-required-features = []
 
 [[bin]]
 name = "codeg-mcp"
@@ -191,8 +188,6 @@ semver = "1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt", "registry", "std"] }
 tracing-appender = "0.2"
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-window-state = { version = "2", optional = true }
 tauri-plugin-updater = { version = "2", optional = true }
 tauri-plugin-process = { version = "2", optional = true }
@@ -237,7 +232,7 @@ windows = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com"
 # gated on that feature: a plain target dependency is unconditional on
 # features, so `--no-default-features` would still run the gtk-sys / gdk-sys /
 # atk-sys pkg-config probes while compiling none of the code that needs them.
-# Neither the codeg-server CI cell nor the Docker backend stage installs GTK.
+# A `--no-default-features` build (the codeg-mcp companion) installs no GTK.
 #
 # `v2_40` is not an independent floor we are choosing: tauri-runtime-wry turns
 # on wry's `linux-body`, which enables it already. Declaring it states the API

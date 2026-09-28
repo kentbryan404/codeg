@@ -28,12 +28,12 @@ export const WINDOW_CAPTION_WIDTH = 138
 export const LEFT_CHROME_CLUSTER = 80
 
 /**
- * Right cluster: terminal + upstream-releases + aux + settings (four icon
- * buttons + padding). A full-page workbench route swaps the terminal/aux pair
- * (and the releases popover) for its own controls (see
- * `WorkbenchRouteChromeActions`), so the count — and this reservation — holds.
+ * Right cluster: terminal + aux + settings (three icon buttons + padding). A
+ * full-page workbench route swaps the terminal/aux pair for its own controls
+ * (see `WorkbenchRouteChromeActions`), so the count — and this reservation —
+ * holds. (The upstream-releases entry moved into the aux panel's Releases tab.)
  */
-export const RIGHT_CHROME_CLUSTER = 156
+export const RIGHT_CHROME_CLUSTER = 128
 
 /**
  * Scale a DOM button-cluster width by the app's rem-based zoom.

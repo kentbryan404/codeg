@@ -13,5 +13,8 @@ fn main() {
         return;
     }
 
-    codeg_lib::run()
+    // Build the Tauri context HERE so the embedded frontend assets live in this
+    // thin bin, not in `codeg_lib` — a frontend (`out/`) change then recompiles
+    // only this bin instead of the whole library.
+    codeg_lib::run(tauri::generate_context!())
 }

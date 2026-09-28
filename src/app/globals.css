@@ -2512,6 +2512,19 @@ div.monaco-diff-editor.side-by-side .editor.modified {
   --tu-seq-6: color-mix(in oklab, var(--tu-accent) 81%, var(--card));
   --tu-seq-7: var(--tu-accent);
 }
+/* ===========================================================================
+   会话中间内容列：全宽 / 居中（外观设置）
+
+   消息流、输入框、欢迎页、以及随输入框对齐的横幅都居中于 `max-w-3xl`
+   （`mx-auto` + `max-w-3xl` 同现）。外观设置开启「全宽显示」时，Provider 在
+   <html> 上写 data-content-width="full"，这里放开这个上限。选择器同时要求
+   `mx-auto` —— 对话框的 `max-w-3xl`（无 mx-auto）不受影响，正好只命中内容列。
+   未分层（unlayered）规则级联胜过 Tailwind 的 utilities 层，无需 !important。
+   ========================================================================= */
+[data-content-width="full"] .mx-auto.max-w-3xl {
+  max-width: none;
+}
+
 /* Built-in browser: indeterminate loading bar under the toolbar. */
 @keyframes browser-loading {
   0% {

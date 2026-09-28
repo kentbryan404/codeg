@@ -190,7 +190,7 @@ pub fn count_entries(id: &str, value: &Value) -> usize {
 }
 
 fn db_err(err: sea_orm::DbErr) -> AppCommandError {
-    AppCommandError::db(crate::db::error::DbError::from(err))
+    AppCommandError::from(crate::db::error::DbError::from(err))
 }
 
 fn encode<T: Serialize>(rows: Vec<T>) -> Result<Value, AppCommandError> {
@@ -755,7 +755,7 @@ fn apply_preferences<'a>(
             };
             app_metadata_service::upsert_value(tx, key, text)
                 .await
-                .map_err(AppCommandError::db)?;
+                .map_err(AppCommandError::from)?;
             applied += 1;
         }
         Ok(applied)

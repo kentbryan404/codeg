@@ -97,9 +97,9 @@ Tauri. Missing secrets fail the macOS job before the build starts.
 
 macOS signing and notarization are a release gate. If the Apple secrets are
 missing or notarization fails, the draft release is left unpublished even if the
-Linux, Windows, server, and Docker jobs produced artifacts. This avoids
+Linux and Windows desktop jobs produced artifacts. This avoids
 publishing a release with unsigned or unnotarized macOS desktop packages.
 
 The Apple keychain setup only runs for the `*-apple-darwin` matrix entries. The
-Linux desktop, Windows desktop, standalone server, and Docker build jobs do not
+Linux and Windows desktop build jobs do not
 depend on the Apple certificate or notarization secrets.

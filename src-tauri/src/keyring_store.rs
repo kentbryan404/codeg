@@ -65,7 +65,7 @@ fn tokens_file_path_for(env_value: Option<&str>) -> std::path::PathBuf {
             .map(|d| d.join("codeg"))
             .unwrap_or_else(|| std::path::PathBuf::from(".codeg-data"))
     });
-    crate::git_credential::absolutize(&dir).join("tokens.json")
+    crate::paths::absolutize(&dir).join("tokens.json")
 }
 
 #[cfg(not(feature = "tauri-runtime"))]

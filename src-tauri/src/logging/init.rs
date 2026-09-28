@@ -4,12 +4,12 @@
 //! early as possible (to capture startup diagnostics) but the persisted level
 //! needs the database and the live-tail emitter needs `AppState`:
 //!
-//! 1. **Phase 1** — [`init_desktop`] / [`init_server`] / [`init_mcp`], called
+//! 1. **Phase 1** — [`init_desktop`] / [`init_mcp`], called
 //!    as the first statement in each binary's entry point. Resolves the logs
 //!    dir from env (pure, no DB), installs the subscriber + [`crate::logging::
 //!    hub::LogHub`], and returns a [`LogGuard`] the caller holds for the
 //!    process lifetime so buffered file lines flush on a graceful exit.
-//! 2. **Phase 2** — [`apply_persisted_level`], once the DB is open: overrides
+//! 2. **Phase 2** — [`apply_persisted_settings`], once the DB is open: overrides
 //!    the default level from the `logging.level` KV value (unless `CODEG_LOG` /
 //!    `RUST_LOG` is set, which wins).
 //! 3. **Phase 3** — `LogHub::set_emitter`, once `AppState` exists: starts
@@ -25,7 +25,7 @@ use tracing_subscriber::{fmt, prelude::*, reload, EnvFilter, Registry};
 use crate::logging::budget::{self, BudgetedWriter};
 use crate::logging::hub::LogHub;
 use crate::logging::layer::BufferEmitLayer;
-use crate::logging::{LogLevel, LogSettings, LOGGING_LEVEL_KEY};
+use crate::logging::{LogLevel, LogSettings};
 
 /// Reload handle stored in [`LogHub`]. The wrapped `EnvFilter` is applied as a
 /// global filter on the registry, so swapping it changes the level for all
@@ -509,7 +509,7 @@ fn build_subscriber(
     file_prefix: &str,
 ) -> (ReloadHandle, Option<WorkerGuard>) {
     // Explicit env wins at startup; otherwise the passed-in default. Phase 2
-    // (apply_persisted_level) later overrides the default from the DB. Uses the
+    // (apply_persisted_settings) later overrides the default from the DB. Uses the
     // same `env_level_override` precedence as `env_level_is_set`, so a level
     // applied here is exactly the one the UI reports as env-locked.
     let initial_filter = match env_level_override() {
@@ -517,7 +517,7 @@ fn build_subscriber(
         // `RUST_LOG=debug` still can't re-open the kill_tree per-PID firehose.
         Some(s) => EnvFilter::builder().parse_lossy(env_override_directives(&s)),
         // Phase 1 has no DB yet, so no persisted per-target overrides; just the
-        // default level. Phase 2 (apply_persisted_level) rebuilds with targets.
+        // default level. Phase 2 (apply_persisted_settings) rebuilds with targets.
         None => build_env_filter(&LogSettings {
             level: initial,
             targets: Vec::new(),
@@ -584,16 +584,10 @@ fn build_subscriber(
 }
 
 /// Phase 1 for the desktop `codeg` binary: stderr + file (`codeg.<date>.log`) +
-/// buffer. Default level is env-or-`info`; [`apply_persisted_level`] refines it
-/// once the DB is open.
+/// buffer. Default level is env-or-`info`; [`apply_persisted_settings`] refines
+/// it once the DB is open.
 pub fn init_desktop() -> LogGuard {
     init_with_file("codeg")
-}
-
-/// Phase 1 for `codeg-server`: stderr + file (`codeg-server.<date>.log`) +
-/// buffer.
-pub fn init_server() -> LogGuard {
-    init_with_file("codeg-server")
 }
 
 fn init_with_file(prefix: &str) -> LogGuard {
@@ -626,16 +620,17 @@ pub fn init_mcp() -> LogGuard {
 /// Phase 2: override the default level from the persisted `logging.level` KV
 /// value, unless an explicit `CODEG_LOG` / `RUST_LOG` is set (env wins). No-op
 /// when no hub is installed (mcp) or the value is absent/unparseable.
-pub async fn apply_persisted_level(conn: &sea_orm::DatabaseConnection) {
+///
+/// The raw persisted value is read and passed in by the caller (which owns the
+/// DB handle), keeping the logging layer free of a database dependency.
+pub fn apply_persisted_settings(raw: Option<String>) {
     if env_level_is_set() {
         return;
     }
     let Some(hub) = crate::logging::hub::log_hub() else {
         return;
     };
-    if let Ok(Some(raw)) =
-        crate::db::service::app_metadata_service::get_value(conn, LOGGING_LEVEL_KEY).await
-    {
+    if let Some(raw) = raw {
         if let Ok(settings) = serde_json::from_str::<LogSettings>(&raw) {
             hub.apply_settings(&settings);
         }

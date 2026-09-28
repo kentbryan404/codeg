@@ -47,24 +47,9 @@ for bin in node pnpm cargo rustc; do
   }
 done
 
-# 链接器与编译缓存加速：只影响本机这次构建，不改产物语义。
-# 链接器优先 mold（大二进制链接通常快于 lld），其次 lld；有 sccache 则挂上。
-# 任一未安装即自动跳过。
-if [ -z "${CODEG_NO_LLD:-}" ] && [ "${RUSTFLAGS:-}" != *"fuse-ld"* ]; then
-  if command -v mold >/dev/null 2>&1; then
-    export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-fuse-ld=mold"
-    echo "[build] 启用 mold 链接器"
-  elif command -v ld.lld >/dev/null 2>&1 || command -v lld >/dev/null 2>&1; then
-    export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-fuse-ld=lld"
-    echo "[build] 启用 lld 链接器"
-  fi
-fi
-
-if [ -z "${CODEG_NO_SCCACHE:-}" ] && [ -z "${RUSTC_WRAPPER:-}" ] &&
-  command -v sccache >/dev/null 2>&1; then
-  export RUSTC_WRAPPER=sccache
-  echo "[build] 启用 sccache 编译缓存"
-fi
+# 链接器与编译缓存加速：与 dev 入口共用同一份，只影响本机这次构建，不改产物语义。
+# （本脚本已 cd 到 src-tauri，故用相对脚本目录的路径。）
+. ./scripts/cargo-accelerators.sh
 
 # node_modules 在仓库根（本脚本开头已 cd 到 src-tauri），故查 ../ 并回根目录装。
 if [ ! -d ../node_modules ]; then
@@ -118,10 +103,11 @@ if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && ! $has_config; then
   ARGS+=(--config '{"bundle":{"createUpdaterArtifacts":false}}')
 fi
 
+echo "[build] 总进度 3 步： [1/3] 前端导出 → [2/3] sidecar → [3/3] 编译与打包（cargo + bundling）"
 echo "[build] pnpm tauri ${ARGS[*]} ${USER_ARGS[*]:-}"
 _build_t0=$SECONDS
 pnpm tauri "${ARGS[@]}" ${USER_ARGS[@]+"${USER_ARGS[@]}"}
-echo "[build] tauri build 耗时 $((SECONDS - _build_t0))s"
+echo "[build] [███] 3/3 完成，总耗时 $((SECONDS - _build_t0))s"
 
 echo
 echo "[build] 完成，产物位于 src-tauri/target/release/bundle（脚本此处 cwd 已是 src-tauri）："

@@ -10,14 +10,20 @@
 //!   after `CODEG_RESTART_DELAY_MS`.
 //! - **Standalone** (no supervisor): the worker re-execs itself.
 
+// The standalone-server self-update stack (`install`/`verify`) is only
+// reachable from the no-`tauri-runtime` build; desktop updates through
+// `tauri-plugin-updater`. Gating the modules keeps them out of desktop builds.
+#[cfg(not(feature = "tauri-runtime"))]
 pub mod install;
 pub mod runtime;
 pub mod state;
+#[cfg(not(feature = "tauri-runtime"))]
 pub mod verify;
 pub mod version;
 
 use std::time::Duration;
 
+#[cfg(not(feature = "tauri-runtime"))]
 pub use install::{InstallOutcome, UpdatePhase};
 pub use runtime::{capability, restart_delay_ms, runtime_label, UpdateCapability};
 pub use state::{new_handle as new_update_state_handle, AppUpdateState, AppUpdateStateHandle};

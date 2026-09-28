@@ -6,6 +6,7 @@ import {
   FolderPen,
   GitCommit,
   ReceiptText,
+  Tag,
   type LucideIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
@@ -34,8 +35,9 @@ import { SessionDetailsTab } from "./aux-panel-session-details-tab"
 import { FileTreeTab } from "./aux-panel-file-tree-tab"
 import { GitChangesTab } from "./aux-panel-git-changes-tab"
 import { GitLogTab } from "./aux-panel-git-log-tab"
+import { ReleasesTab } from "./aux-panel-releases-tab"
 
-const LAZY_TABS: AuxPanelTab[] = ["file_tree", "changes", "git_log"]
+const LAZY_TABS: AuxPanelTab[] = ["file_tree", "changes", "git_log", "releases"]
 
 // Visible order + icon for every aux tab. Both the desktop segmented control
 // and the collapsed picker map over this, so the two surfaces can never drift.
@@ -44,18 +46,20 @@ const TAB_ORDER: AuxPanelTab[] = [
   "file_tree",
   "changes",
   "git_log",
+  "releases",
 ]
 const TAB_ICONS: Record<AuxPanelTab, LucideIcon> = {
   session_details: ReceiptText,
   file_tree: Folder,
   changes: FolderPen,
   git_log: GitCommit,
+  releases: Tag,
 }
 // The three folder-scoped tabs share one label namespace (Folder.auxPanel.tabs);
 // session details resolves from its own (Folder.sessionDetails.menuLabel). The
 // value type is the literal key union so next-intl's typed `t()` accepts it.
 const FOLDER_TAB_LABEL_KEY: Record<
-  Exclude<AuxPanelTab, "session_details">,
+  Exclude<AuxPanelTab, "session_details" | "releases">,
   "files" | "changes" | "commits"
 > = {
   file_tree: "files",
@@ -72,7 +76,7 @@ const FOLDER_TAB_LABEL_KEY: Record<
 // all three grow with the zoom level — as `rightReserve` already does. Pinned at
 // their 100% pixel values the strip would stay expanded at higher zoom levels
 // and slide under the chrome overlay.
-const SEGMENTED_TABS_WIDTH_REM = 8.125 // ~130px @100%
+const SEGMENTED_TABS_WIDTH_REM = 10.125 // ~162px @100% (five icon triggers)
 const TAB_STRIP_GUTTER_REM = 0.75 // pl-3
 const TAB_STRIP_GAP_REM = 0.75 // breathing room before the chrome overlay
 
@@ -113,15 +117,23 @@ export function resolveAuxTabView(
   isChatMode: boolean
 ): { showFolderTabs: boolean; effectiveTab: AuxPanelTab } {
   const showFolderTabs = activeFolderId != null && !isChatMode
+  // Only the folder-scoped tabs are hidden without a folder; Session Details
+  // and Releases are always available, so a stored selection of one survives.
+  const isFolderTab =
+    activeTab === "file_tree" ||
+    activeTab === "changes" ||
+    activeTab === "git_log"
   return {
     showFolderTabs,
-    effectiveTab: showFolderTabs ? activeTab : "session_details",
+    effectiveTab:
+      showFolderTabs || !isFolderTab ? activeTab : "session_details",
   }
 }
 
 export function AuxPanel() {
   const t = useTranslations("Folder.auxPanel.tabs")
   const tDetails = useTranslations("Folder.sessionDetails")
+  const tUpstream = useTranslations("UpstreamReleases")
   const { isOpen, width, activeTab, setActiveTab } = useAuxPanelContext()
   const { activeFolderId } = useActiveFolder()
   const isChatMode = useIsActiveChatMode()
@@ -190,9 +202,10 @@ export function AuxPanel() {
   // Drawer), and only when there's more than the lone Session Details tab.
   const winLinuxControls = isDesktop() && (isWindows || isLinux)
   const rightReserve = rightChromeReserve(winLinuxControls, zoomLevel)
+  // Sessions Details + Releases are always present, so the strip always has at
+  // least two triggers; collapse purely on width.
   const collapsed =
     !isMobile &&
-    showFolderTabs &&
     shouldCollapseAuxTabs(
       measuredWidth > 0 ? measuredWidth : width,
       rightReserve,
@@ -203,8 +216,10 @@ export function AuxPanel() {
     (tab: AuxPanelTab) =>
       tab === "session_details"
         ? tDetails("menuLabel")
-        : t(FOLDER_TAB_LABEL_KEY[tab]),
-    [t, tDetails]
+        : tab === "releases"
+          ? tUpstream("title")
+          : t(FOLDER_TAB_LABEL_KEY[tab]),
+    [t, tDetails, tUpstream]
   )
 
   // Shared across the mobile underline row and the desktop segmented control.
@@ -215,7 +230,7 @@ export function AuxPanel() {
       ? "h-6 flex-none rounded-md px-2"
       : undefined
     return TAB_ORDER.filter(
-      (tab) => tab === "session_details" || showFolderTabs
+      (tab) => tab === "session_details" || tab === "releases" || showFolderTabs
     ).map((tab) => {
       const Icon = TAB_ICONS[tab]
       const label = tabLabel(tab)
@@ -343,7 +358,7 @@ export function AuxPanel() {
               variant="default"
               className={cn(
                 "h-7 gap-0.5 rounded-lg bg-foreground/[0.06] p-0.5 group-data-horizontal/tabs:h-7",
-                (!showFolderTabs || collapsed) && "hidden"
+                collapsed && "hidden"
               )}
             >
               {renderTabTriggers(true)}
@@ -381,6 +396,13 @@ export function AuxPanel() {
           className="mt-0 flex-1 min-h-0 overflow-hidden"
         >
           {mountedTabs.has("git_log") ? <GitLogTab /> : null}
+        </TabsContent>
+        <TabsContent
+          value="releases"
+          forceMount
+          className="mt-0 flex-1 min-h-0 overflow-hidden"
+        >
+          {mountedTabs.has("releases") ? <ReleasesTab /> : null}
         </TabsContent>
       </Tabs>
     </aside>

@@ -48,17 +48,6 @@ pub(crate) fn bat_double_quote(s: &str) -> String {
     out
 }
 
-/// Make a path absolute without requiring it to exist on disk. Falls back
-/// to the original path if the current directory is unreadable.
-pub fn absolutize(p: &Path) -> PathBuf {
-    if p.is_absolute() {
-        return p.to_path_buf();
-    }
-    std::env::current_dir()
-        .map(|cwd| cwd.join(p))
-        .unwrap_or_else(|_| p.to_path_buf())
-}
-
 /// Create a credential helper that calls the app binary directly with
 /// `--credential-helper` flag. The app binary opens the DB, looks up
 /// the matching account, and outputs credentials to stdout.
@@ -76,8 +65,8 @@ pub fn create_credential_helper_script(
     app_data_dir: &Path,
     app_binary_path: &Path,
 ) -> std::io::Result<PathBuf> {
-    let app_data_dir = absolutize(app_data_dir);
-    let app_binary_path = absolutize(app_binary_path);
+    let app_data_dir = crate::paths::absolutize(app_data_dir);
+    let app_binary_path = crate::paths::absolutize(app_binary_path);
     let binary_str = app_binary_path.to_string_lossy();
     let data_dir_str = app_data_dir.to_string_lossy();
 
@@ -754,16 +743,16 @@ mod tests {
     fn test_helper_script_embeds_data_dir() {
         let tmp = std::env::temp_dir().join(format!("codeg-cred-test-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&tmp).expect("create tmp dir");
-        let binary = std::path::PathBuf::from("/usr/local/bin/codeg-server");
+        let binary = std::path::PathBuf::from("/usr/local/bin/codeg");
 
         let script_path = create_credential_helper_script(&tmp, &binary)
             .expect("script generation should succeed");
         let content = std::fs::read_to_string(&script_path).expect("read script");
 
-        // Must invoke the embedded binary with both flags so server-mode
-        // deployments don't fall back to the hardcoded `app.codeg` path.
+        // Must invoke the embedded binary with both flags so deployments
+        // don't fall back to the hardcoded `app.codeg` path.
         // Paths are sh-single-quoted so spaces / `$` / backticks survive.
-        assert!(content.contains("/usr/local/bin/codeg-server"));
+        assert!(content.contains("/usr/local/bin/codeg"));
         assert!(content.contains("--credential-helper"));
         assert!(
             content.contains(&format!("--data-dir '{}'", tmp.display())),
@@ -819,7 +808,7 @@ mod tests {
     #[test]
     fn test_absolutize_already_absolute() {
         let abs = std::env::current_dir().expect("cwd");
-        assert_eq!(absolutize(&abs), abs);
+        assert_eq!(crate::paths::absolutize(&abs), abs);
     }
 
     #[test]
@@ -827,7 +816,7 @@ mod tests {
         let _guard = STATE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let cwd = std::env::current_dir().expect("cwd");
         let rel = std::path::PathBuf::from("relative/path");
-        assert_eq!(absolutize(&rel), cwd.join("relative/path"));
+        assert_eq!(crate::paths::absolutize(&rel), cwd.join("relative/path"));
     }
 
     #[cfg(unix)]
@@ -846,7 +835,7 @@ mod tests {
 
         let rel = std::path::PathBuf::from("data");
         std::fs::create_dir_all(&rel).expect("create rel dir");
-        let binary = std::path::PathBuf::from("./codeg-server");
+        let binary = std::path::PathBuf::from("./codeg");
 
         let script_path = create_credential_helper_script(&rel, &binary)
             .expect("script generation should succeed");
@@ -866,7 +855,7 @@ mod tests {
             "relative data-dir leaked into script:\n{content}"
         );
         assert!(
-            !content.contains("'./codeg-server'"),
+            !content.contains("'./codeg'"),
             "relative binary path leaked into script:\n{content}"
         );
         // Positive check: an absolute path segment for the data dir must be

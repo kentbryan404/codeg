@@ -174,6 +174,13 @@
       "sectionTitle": "منطقة اختيار الوضع",
       "sectionDescription": "بطاقات الاختصار «تطوير الكود / الأعمال المكتبية» التي تظهر أعلى مربع الإدخال في صفحة المحادثة الجديدة.",
       "showQuickActions": "العرض في صفحة المحادثة الجديدة"
+    },
+    "contentWidth": {
+      "sectionTitle": "عرض المحتوى",
+      "sectionDescription": "عرض المنطقة الوسطى للمحادثة (الرسائل، مربع الإدخال، صفحة الترحيب). «افتراضي» يوسّطها على عرض قراءة مريح؛ «عرض كامل» يمدّها حتى حواف اللوحة.",
+      "placeholder": "اختر عرض المحتوى",
+      "default": "افتراضي",
+      "full": "عرض كامل"
     }
   },
   "SystemSettings": {
@@ -1797,7 +1804,12 @@
     "prerelease": "إصدار تجريبي",
     "noNotes": "لا توجد ملاحظات إصدار.",
     "viewOnGitHub": "عرض على GitHub",
-    "openReleasesPage": "فتح صفحة الإصدارات"
+    "openReleasesPage": "فتح صفحة الإصدارات",
+    "compareVsMaster": "مقابل {branch}",
+    "compareAhead": "{count} متقدم",
+    "compareBehind": "{count} متأخر",
+    "compareFiles": "{count, plural, zero {لا ملفات} one {ملف واحد} two {ملفان} few {# ملفات} many {# ملفًا} other {# ملف}}",
+    "compareIdentical": "مطابق لـ {branch}"
   },
   "Folder": {
     "workspaceStatus": {

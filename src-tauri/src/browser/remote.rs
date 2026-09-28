@@ -78,7 +78,7 @@ pub async fn prepare(
     let db = app.state::<AppDatabase>();
     let connection = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| AppCommandError::not_found(format!("Remote connection {connection_id} not found")))?;
     let host = display_host(&connection.base_url);
     let egress = app

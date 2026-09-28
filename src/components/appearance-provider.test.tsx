@@ -2,8 +2,9 @@ import { act, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { AppearanceProvider } from "./appearance-provider"
-import { useCustomStyle } from "@/hooks/use-appearance"
+import { useContentFullWidth, useCustomStyle } from "@/hooks/use-appearance"
 import {
+  STORAGE_KEY_CONTENT_FULL_WIDTH,
   STORAGE_KEY_CUSTOM_THEME,
   STORAGE_KEY_ZOOM_LEVEL,
 } from "@/lib/appearance-script"
@@ -94,6 +95,38 @@ describe("debounced persistence", () => {
     })
 
     expect(storedPrimary()).toBe("#bbbbbb")
+  })
+})
+
+describe("content full width", () => {
+  function Probe() {
+    const { contentFullWidth, setContentFullWidth } = useContentFullWidth()
+    return (
+      <button onClick={() => setContentFullWidth(!contentFullWidth)}>
+        toggle-width
+      </button>
+    )
+  }
+
+  it("defaults to the centred column and flips the <html> attribute on toggle", () => {
+    render(
+      <AppearanceProvider>
+        <Probe />
+      </AppearanceProvider>
+    )
+
+    expect(document.documentElement.getAttribute("data-content-width")).toBe(
+      "default"
+    )
+
+    act(() => {
+      fireEvent.click(screen.getByText("toggle-width"))
+    })
+
+    expect(document.documentElement.getAttribute("data-content-width")).toBe(
+      "full"
+    )
+    expect(localStorage.getItem(STORAGE_KEY_CONTENT_FULL_WIDTH)).toBe("1")
   })
 })
 

@@ -92,7 +92,7 @@ pub async fn list_remote_workspace_connections(
 ) -> Result<Vec<RemoteWorkspaceConnectionInfo>, AppCommandError> {
     remote_workspace_connection_service::list(&db.conn)
         .await
-        .map_err(AppCommandError::db)
+        .map_err(AppCommandError::from)
 }
 
 #[cfg(feature = "tauri-runtime")]
@@ -103,7 +103,7 @@ pub async fn get_remote_workspace_connection(
 ) -> Result<RemoteWorkspaceConnectionInfo, AppCommandError> {
     remote_workspace_connection_service::get(&db.conn, id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| AppCommandError::not_found(format!("Remote connection {id} not found")))
 }
 
@@ -143,7 +143,7 @@ pub async fn update_remote_workspace_connection(
     validate_remote_health(&input.base_url, &input.token, &input.headers).await?;
     let before = remote_workspace_connection_service::get(&db.conn, id)
         .await
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     let updated = remote_workspace_connection_service::update(
         &db.conn,
         id,
@@ -177,7 +177,7 @@ pub async fn delete_remote_workspace_connection(
 ) -> Result<(), AppCommandError> {
     remote_workspace_connection_service::delete(&db.conn, id)
         .await
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
     // What the remote host's pages stored in the built-in browser goes with
     // the connection they were opened through.
     crate::browser::remote::forget_connection(&app, id).await;
@@ -202,7 +202,7 @@ pub async fn open_remote_workspace(
 ) -> Result<(), AppCommandError> {
     let connection = remote_workspace_connection_service::get(&db.conn, id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| AppCommandError::not_found(format!("Remote connection {id} not found")))?;
 
     let label = format!("remote-workspace-{id}");

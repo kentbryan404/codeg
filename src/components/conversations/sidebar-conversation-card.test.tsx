@@ -645,3 +645,50 @@ describe("SidebarConversationCard hover details bubble", () => {
   // `MouseEvent` with `pointerType: undefined` and the branch can't be reached.
   // Verify that one in a real browser, not here.
 })
+
+describe("SidebarConversationCard branch suffix", () => {
+  beforeEach(() => {
+    resetAppWorkspaceStore()
+  })
+  afterEach(() => {
+    cleanup()
+    resetAppWorkspaceStore()
+  })
+
+  function renderCard(c: DbConversationSummary) {
+    return renderWithIntl(
+      <SidebarConversationCard
+        conversation={c}
+        isSelected={false}
+        timeLabel=""
+        onSelect={onSelect}
+        onDoubleClick={onDoubleClick}
+        onRename={onRename}
+        onDelete={onDelete}
+        onStatusChange={onStatusChange}
+      />
+    )
+  }
+
+  function branchSuffix(container: HTMLElement) {
+    return container.querySelector("[data-branch]")?.textContent ?? null
+  }
+
+  it("shows the branch the session was started on", () => {
+    const { container } = renderCard({ ...conv(1), git_branch: "feature-x" })
+    expect(branchSuffix(container)).toBe("feature-x")
+  })
+
+  it("falls back to the folder's live branch for rows without one", () => {
+    // Imported sessions predate the `git_branch` column; the folder's polled HEAD
+    // is what the hover bubble falls back to, and the suffix must match it.
+    useAppWorkspaceStore.setState({ branches: new Map([[1, "main"]]) })
+    const { container } = renderCard(conv(1)) // git_branch: null
+    expect(branchSuffix(container)).toBe("main")
+  })
+
+  it("adds no suffix when neither the session nor the folder has a branch", () => {
+    const { container } = renderCard(conv(1))
+    expect(branchSuffix(container)).toBeNull()
+  })
+})

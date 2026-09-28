@@ -19,7 +19,7 @@
 
 Codeg (Code Generation) هو مساحة عمل برمجية متعددة الوكلاء: شغّل كل وكلاء البرمجة بالذكاء الاصطناعي في مكان واحد — ودعهم يعملون معًا.
 
-يجمع جلساتك من كل واجهات الوكلاء المدعومة في مساحة عمل واحدة قابلة للبحث، ويتيح للوكيل الرئيسي أن يفوّض إلى وكلاء فرعيين من أنواع أخرى داخل المهمة نفسها. أما العمل الذي لا تريد الجلوس لمتابعته فيذهب إلى لوحة المهام قيد الانتظار: كل مهمة في فرعها الخاص، تعمل دون إشراف، وتنتظر مراجعتك قبل أن تُدمج. ويعمل Codeg كتطبيق سطح مكتب أو خادم مستقل أو حاوية Docker، إضافةً إلى تطبيقَي iOS وAndroid الأصليين لمواصلة العمل بعيدًا عن مكتبك؛ يأتي بخمسة عشر وكيلاً مدمجًا، ويمكنك تسجيل أي وكيل آخر متوافق مع ACP بنفسك.
+يجمع جلساتك من كل واجهات الوكلاء المدعومة في مساحة عمل واحدة قابلة للبحث، ويتيح للوكيل الرئيسي أن يفوّض إلى وكلاء فرعيين من أنواع أخرى داخل المهمة نفسها. أما العمل الذي لا تريد الجلوس لمتابعته فيذهب إلى لوحة المهام قيد الانتظار: كل مهمة في فرعها الخاص، تعمل دون إشراف، وتنتظر مراجعتك قبل أن تُدمج. ويعمل Codeg كتطبيق سطح مكتب؛ يأتي بخمسة عشر وكيلاً مدمجًا، ويمكنك تسجيل أي وكيل آخر متوافق مع ACP بنفسك.
 
 ![مساحة العمل](../images/workspace-light.png#gh-light-mode-only)
 ![مساحة العمل](../images/workspace-dark.png#gh-dark-mode-only)
@@ -142,14 +142,6 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 
 **حين يسوء الأمر.** الجولة الفاشلة لا تكتفي بقول إن شيئًا ما أخفق — ففي Claude Code وCodex تسمّي النوع: مشكلة اتصال، أو مشكلة وصول، أو بلوغ الحد، أو رفض للطلب، أو خلل في الخدمة — وتضع أسفل المُحرِّر شريطًا لا يحمل إلا ما يفيد فعلًا: إعادة المحاولة، أو تسجيل الدخول، أو جلسة جديدة. وما يعيد الوكيل محاولته من تلقاء نفسه يظهر بلون كهرماني ثم ينتهي إلى سطر واحد: «تمت الاستعادة». كما أن مؤشّر الاتصال أسفل المُحرِّر زرٌّ أيضًا: اضغطه لترى الحالة الحقيقية للجلسة، ومعه «إعادة اتصال» تستأنف الجلسة بدل أن تبدأ من جديد.
 
-## 📱 iPhone وiPad وAndroid
-
-ابتعد عن مكتبك، لا عن عملك. يتصل تطبيقا iOS وAndroid الأصليان بنسخة Codeg التي تشغّلها أصلًا — **خدمة الويب** في تطبيق سطح المكتب، أو خادم `codeg-server` الخاص بك — ومن هناك تبدأ الجلسات، وتتابع الردود واستدعاءات الأدوات لحظة بلحظة، وتردّ على طلبات الأذونات، وتتصفّح المشاريع والفروع. لا شيء ينتقل إلى الهاتف: ملفاتك وواجهات الوكلاء ومحادثاتك تبقى على الجهاز الذي يشغّل Codeg، ويُحفَظ رمز الوصول في Keychain على iOS أو عبر Android Keystore. التطبيقان مفتوحا المصدر ([iOS](https://github.com/xintaofei/codeg-ios) و[Android](https://github.com/xintaofei/codeg-android))؛ ويتم الاقتران في ثلاث خطوات تجدها في [التطبيقات المحمولة](https://docs.codeg.app/getting-started/installation#mobile-apps).
-
-| iPhone وiPad | Android |
-| :---: | :---: |
-| <img src="../images/mobile-ios.jpg" alt="بدء جلسة من تطبيق Codeg على iOS" width="248" /> | <img src="../images/mobile-android.jpg" alt="ردّ وكيل يتدفق مباشرةً داخل تطبيق Codeg على Android" width="248" /> |
-
 ## ✨ أبرز المزايا
 
 - **[تجميع المحادثات](https://docs.codeg.app/guide/aggregation)** — استورد جلسات كل الوكلاء المدعومين إلى مساحة عمل موحّدة قابلة للبحث، وتابع أيًّا منها من حيث توقفت
@@ -167,41 +159,18 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 - **[مُنشئ المشروع](https://docs.codeg.app/guide/project-boot)** — أنشئ مشاريع جديدة بصريًا مع معاينة حية، ثم افتحها مباشرةً في مساحة العمل
 - **[MCP](https://docs.codeg.app/guide/mcp) & [المهارات](https://docs.codeg.app/guide/skills)** — فحص الخوادم المحلية مع البحث والتثبيت من السجل، ومهارات تُدار على النطاق العام أو نطاق المشروع
 - **[اجعله على ذوقك](https://docs.codeg.app/reference/settings/appearance)** — أعد تلوين أي من الثيمات الاثني عشر رمزًا لونيًا تلو الآخر، واضبط استدارة الزوايا في التطبيق كله، واستورد الثيمات وصدّرها بصيغة shadcn JSON، أو اكتب CSS خاصًا بك
-- **[سطح المكتب والخادم وDocker](https://docs.codeg.app/getting-started/deployment)** — تطبيق سطح مكتب أصلي، أو خادم `codeg-server` مستقل تصل إليه من أي متصفح، أو `docker compose up`
-- **[iPhone وiPad وAndroid](https://docs.codeg.app/getting-started/installation#mobile-apps)** — تطبيقات محمولة أصلية تتصل بسطح مكتبك أو خادمك: ابدأ الجلسات، وتابع الردود المتدفقة، ووافق على الأذونات، وتصفّح المشاريع من أي مكان
 
 ## 📦 التثبيت والتشغيل
 
 **سطح المكتب** — نزّل المثبّت الخاص بـ macOS أو Windows أو Linux من [Releases](https://github.com/xintaofei/codeg/releases)، ثم اتبع [التثبيت](https://docs.codeg.app/getting-started/installation).
 
-**الخادم** — شغّل Codeg بلا واجهة وادخل إليه من أي متصفح. على Linux أو macOS:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/xintaofei/codeg/main/install.sh | bash
-CODEG_STATIC_DIR=/usr/local/share/codeg/web codeg-server
-```
-
-على Windows، في PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/xintaofei/codeg/main/install.ps1 | iex
-$env:CODEG_STATIC_DIR="$env:LOCALAPPDATA\codeg\web"; codeg-server
-```
-
-**Docker** — الخادم نفسه، داخل حاوية واحدة:
-
-```bash
-docker run -d -p 3080:3080 -v codeg-data:/data ghcr.io/xintaofei/codeg:latest
-```
-
-**الهاتف واللوحي** — ثبّت [تطبيق iOS](https://apps.apple.com/app/codeg-client/id6785199071) أو [حزمة Android APK](https://github.com/xintaofei/codeg-android/releases/latest)، ثم وجّهه إلى **خدمة الويب** في تطبيق سطح المكتب أو إلى خادم `codeg-server` الخاص بك: العنوان والرمز، وانتهى الأمر. خطوات الاقتران في [التطبيقات المحمولة](https://docs.codeg.app/getting-started/installation#mobile-apps).
 
 يغطي [النشر](https://docs.codeg.app/getting-started/deployment) استخدام Compose والملفات التنفيذية الجاهزة والبناء من المصدر والتحديث في المكان؛ وتجد متغيرات البيئة في [الإعداد](https://docs.codeg.app/getting-started/configuration). ولبناء Codeg نفسه: [التطوير](https://docs.codeg.app/reference/development) و[البنية](https://docs.codeg.app/reference/architecture).
 
 ## 🔒 الخصوصية والأمان
 
 - محلي أولاً بشكل افتراضي في التحليل والتخزين وعمليات المشروع — ولا يحدث أي وصول للشبكة إلا عبر إجراء تبدأه أنت
-- وضعا الويب والخادم محميّان بمصادقة قائمة على الرموز
+- وضع الويب محميّ بمصادقة قائمة على الرموز
 - دعم بروكسي النظام لبيئات المؤسسات
 
 التفاصيل في [الخصوصية والأمان](https://docs.codeg.app/reference/privacy).

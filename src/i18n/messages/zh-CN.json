@@ -174,6 +174,13 @@
       "sectionTitle": "模式选择区域",
       "sectionDescription": "新会话页面输入框上方显示的「代码开发 / 日常办公」快捷卡片区域。",
       "showQuickActions": "在新会话页面显示"
+    },
+    "contentWidth": {
+      "sectionTitle": "内容宽度",
+      "sectionDescription": "会话中间内容区域（消息、输入框、欢迎页）的宽度。默认居中于易读宽度；全宽则铺满面板两边。",
+      "placeholder": "选择内容宽度",
+      "default": "默认",
+      "full": "全宽"
     }
   },
   "SystemSettings": {
@@ -1797,7 +1804,12 @@
     "prerelease": "预发布",
     "noNotes": "暂无更新说明。",
     "viewOnGitHub": "在 GitHub 查看",
-    "openReleasesPage": "打开版本发布页"
+    "openReleasesPage": "打开版本发布页",
+    "compareVsMaster": "相对 {branch}",
+    "compareAhead": "领先 {count}",
+    "compareBehind": "落后 {count}",
+    "compareFiles": "{count} 个文件",
+    "compareIdentical": "与 {branch} 一致"
   },
   "Folder": {
     "workspaceStatus": {

@@ -19,7 +19,7 @@
 
 Codeg(Code Generation)는 멀티 에이전트 코딩 워크스페이스입니다. 모든 AI 코딩 에이전트를 한곳에서 실행하고, 서로 협업하게 만듭니다.
 
-지원되는 모든 에이전트 CLI의 세션을 검색 가능한 하나의 워크스페이스로 모으고, 하나의 작업 안에서 메인 에이전트가 다른 종류의 서브 에이전트에게 위임할 수 있습니다. 지켜보고 앉아 있기 아까운 일은 할 일 보드에 적어 두세요. 각 작업이 자기 브랜치에서 무인으로 돌아가고, 반영되기 전에 당신의 검토를 기다립니다. Codeg는 데스크톱 앱·독립 서버·Docker 컨테이너 어느 형태로든 실행되고, 네이티브 iOS·Android 클라이언트가 있어 자리를 비운 사이에도 작업을 이어갈 수 있습니다. 열다섯 개의 에이전트가 기본 내장되며, ACP를 지원하는 다른 에이전트를 직접 등록할 수도 있습니다.
+지원되는 모든 에이전트 CLI의 세션을 검색 가능한 하나의 워크스페이스로 모으고, 하나의 작업 안에서 메인 에이전트가 다른 종류의 서브 에이전트에게 위임할 수 있습니다. 지켜보고 앉아 있기 아까운 일은 할 일 보드에 적어 두세요. 각 작업이 자기 브랜치에서 무인으로 돌아가고, 반영되기 전에 당신의 검토를 기다립니다. Codeg는 데스크톱 앱으로 실행됩니다. 열다섯 개의 에이전트가 기본 내장되며, ACP를 지원하는 다른 에이전트를 직접 등록할 수도 있습니다.
 
 ![워크스페이스](../images/workspace-light.png#gh-light-mode-only)
 ![워크스페이스](../images/workspace-dark.png#gh-dark-mode-only)
@@ -142,14 +142,6 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 
 **잘못됐을 때.** 실패한 턴은 그냥 문제가 생겼다고만 하지 않습니다. Claude Code와 Codex에서는 종류까지 말해 줍니다 — 연결 문제, 접근 문제, 한도 도달, 요청 거부, 서비스 문제 — 그리고 입력창 아래에 실제로 도움이 될 것만 담은 띠를 붙입니다. 다시 시도, 로그인, 또는 새 세션. 에이전트가 스스로 재시도하는 동안에는 호박색으로 표시되고, 턴이 무사히 끝나면 '복구됨' 한 줄로 정리됩니다. 입력창 아래 연결 상태 아이콘도 버튼입니다. 누르면 그 세션의 실제 상태가 나오고, 새로 시작하는 대신 이어받는 '다시 연결'도 거기 있습니다.
 
-## 📱 iPhone, iPad & Android
-
-책상을 떠나도 작업은 멈추지 않습니다. 네이티브 iOS·Android 클라이언트는 이미 돌아가고 있는 당신의 Codeg —— 데스크톱 앱의 **웹 서비스**, 또는 직접 운영하는 `codeg-server` —— 에 연결됩니다. 거기서 세션을 시작하고, 응답과 도구 호출이 실시간으로 흘러드는 것을 지켜보고, 권한 요청에 답하고, 프로젝트와 브랜치를 둘러볼 수 있습니다. 휴대폰으로 옮겨지는 것은 없습니다. 파일과 에이전트 CLI, 대화는 Codeg가 도는 컴퓨터에 그대로 남고, 액세스 토큰은 iOS 키체인이나 Android 키스토어가 보관합니다. 두 클라이언트 모두 오픈 소스입니다([iOS](https://github.com/xintaofei/codeg-ios), [Android](https://github.com/xintaofei/codeg-android)). 연결은 세 단계면 끝나며, 자세한 내용은 [모바일 앱](https://docs.codeg.app/getting-started/installation#mobile-apps)에 있습니다.
-
-| iPhone & iPad | Android |
-| :---: | :---: |
-| <img src="../images/mobile-ios.jpg" alt="Codeg iOS 클라이언트에서 세션을 시작하는 화면" width="248" /> | <img src="../images/mobile-android.jpg" alt="Codeg Android 클라이언트로 흘러드는 에이전트 응답" width="248" /> |
-
 ## ✨ 하이라이트
 
 - **[대화 통합](https://docs.codeg.app/guide/aggregation)** — 지원되는 모든 에이전트의 세션을 검색 가능한 하나의 워크스페이스로 가져오고, 멈춘 지점부터 이어서 진행합니다
@@ -167,41 +159,18 @@ Claude Code · Codex · Gemini · OpenClaw · OpenCode · Cline · Hermes · Cod
 - **[프로젝트 부트](https://docs.codeg.app/guide/project-boot)** — 실시간 미리보기와 함께 새 프로젝트를 시각적으로 구성하고, 곧바로 워크스페이스에서 엽니다
 - **[MCP](https://docs.codeg.app/guide/mcp) & [스킬](https://docs.codeg.app/guide/skills)** — 로컬 서버 스캔과 레지스트리 검색/설치, 스킬은 전역 또는 프로젝트 범위로 관리
 - **[내 취향대로](https://docs.codeg.app/reference/settings/appearance)** — 열두 가지 테마를 색상 토큰 단위로 바꾸고, 모서리 둥글기를 앱 전체에 적용하고, 테마를 shadcn JSON으로 가져오고 내보내거나, 직접 CSS를 씁니다
-- **[데스크톱·서버·Docker](https://docs.codeg.app/getting-started/deployment)** — 네이티브 데스크톱 앱, 브라우저로 접속하는 독립 실행형 `codeg-server`, 또는 `docker compose up`
-- **[iPhone, iPad & Android](https://docs.codeg.app/getting-started/installation#mobile-apps)** — 데스크톱이나 서버에 연결되는 네이티브 모바일 클라이언트: 어디서나 세션을 시작하고, 응답을 스트리밍으로 받고, 권한을 승인하고, 프로젝트를 살펴봅니다
 
 ## 📦 설치 및 실행
 
 **데스크톱** — [Releases](https://github.com/xintaofei/codeg/releases)에서 macOS, Windows, Linux용 설치 프로그램을 내려받은 뒤 [설치](https://docs.codeg.app/getting-started/installation) 안내를 따르세요.
 
-**서버** — Codeg를 헤드리스로 실행하고 어떤 브라우저에서든 접속합니다. Linux 또는 macOS:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/xintaofei/codeg/main/install.sh | bash
-CODEG_STATIC_DIR=/usr/local/share/codeg/web codeg-server
-```
-
-Windows(PowerShell):
-
-```powershell
-irm https://raw.githubusercontent.com/xintaofei/codeg/main/install.ps1 | iex
-$env:CODEG_STATIC_DIR="$env:LOCALAPPDATA\codeg\web"; codeg-server
-```
-
-**Docker** — 같은 서버를, 컨테이너 하나로:
-
-```bash
-docker run -d -p 3080:3080 -v codeg-data:/data ghcr.io/xintaofei/codeg:latest
-```
-
-**모바일** — [iOS 앱](https://apps.apple.com/app/codeg-client/id6785199071) 또는 [Android APK](https://github.com/xintaofei/codeg-android/releases/latest)를 설치한 뒤 데스크톱 앱의 **웹 서비스**나 직접 운영하는 `codeg-server`를 가리키게 하세요: 주소와 토큰만 넣으면 끝입니다. 연결 절차는 [모바일 앱](https://docs.codeg.app/getting-started/installation#mobile-apps) 참고.
 
 Compose, 사전 빌드 바이너리, 소스 빌드, 무중단 업데이트는 [배포](https://docs.codeg.app/getting-started/deployment)에서, 환경 변수는 [설정](https://docs.codeg.app/getting-started/configuration)에서 다룹니다. Codeg 자체를 빌드하려면 [개발](https://docs.codeg.app/reference/development)과 [아키텍처](https://docs.codeg.app/reference/architecture)를 보세요.
 
 ## 🔒 개인정보 보호 및 보안
 
 - 파싱·저장·프로젝트 작업은 기본적으로 로컬 우선 — 네트워크 접근은 사용자가 시작한 동작에서만 발생합니다
-- 웹 모드와 서버 모드는 토큰 기반 인증으로 보호됩니다
+- 웹 모드는 토큰 기반 인증으로 보호됩니다
 - 기업 환경을 위한 시스템 프록시 지원
 
 자세한 내용은 [개인정보 보호 및 보안](https://docs.codeg.app/reference/privacy)을 참고하세요.

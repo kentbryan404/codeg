@@ -377,7 +377,7 @@ pub async fn remote_http_call(
 ) -> Result<Value, AppCommandError> {
     let conn = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| {
             AppCommandError::not_found(format!("Remote connection {connection_id} not found"))
         })?;
@@ -595,7 +595,7 @@ pub async fn remote_upload_attachment(
 ) -> Result<Value, AppCommandError> {
     let conn = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| {
             AppCommandError::not_found(format!("Remote connection {connection_id} not found"))
         })?;
@@ -825,7 +825,7 @@ pub async fn remote_upload_workspace_paths(
 
     let conn = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| {
             AppCommandError::not_found(format!("Remote connection {connection_id} not found"))
         })?;
@@ -1240,7 +1240,7 @@ async fn remote_workspace_download_stream(
 ) -> Result<RemoteWorkspaceDownloadResult, AppCommandError> {
     let conn = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| {
             AppCommandError::not_found(format!("Remote connection {connection_id} not found"))
         })?;
@@ -1589,7 +1589,7 @@ pub async fn remote_ws_subscribe(
     // Slow path: load credentials, create entry, spawn WS task.
     let conn = remote_workspace_connection_service::get(&db.conn, connection_id)
         .await
-        .map_err(AppCommandError::db)?
+        .map_err(AppCommandError::from)?
         .ok_or_else(|| {
             AppCommandError::not_found(format!("Remote connection {connection_id} not found"))
         })?;

@@ -19,7 +19,7 @@
 
 Codeg (Code Generation) is a multi-agent coding workspace: run every AI coding agent in one place — and let them work together.
 
-It aggregates your sessions from every supported agent CLI into one searchable workspace, and lets a main agent delegate to sub-agents of other types within a single task. Work you'd rather not sit through goes on a to-do board instead — each task in its own branch, running unattended, waiting for your review before it lands. Codeg runs as a desktop app, a standalone server, or a Docker container, with native iOS and Android clients for when you're away from your desk; fifteen agents come built in, and you can register any other ACP-compatible agent yourself.
+It aggregates your sessions from every supported agent CLI into one searchable workspace, and lets a main agent delegate to sub-agents of other types within a single task. Work you'd rather not sit through goes on a to-do board instead — each task in its own branch, running unattended, waiting for your review before it lands. Codeg runs as a desktop app; fifteen agents come built in, and you can register any other ACP-compatible agent yourself.
 
 ![workspace](./docs/images/workspace-light.png#gh-light-mode-only)
 ![workspace](./docs/images/workspace-dark.png#gh-dark-mode-only)
@@ -142,14 +142,6 @@ One workspace, every agent. Whichever one is driving — Claude Code, Codex, Cur
 
 **When it goes wrong.** A failed turn doesn't just say something went wrong — on Claude Code and Codex it names the kind: a connection issue, an access issue, a limit reached, a request rejected, a service issue — and docks a strip under the composer carrying whatever would actually help, Retry or Sign in or a new session. Retries the agent makes on its own show amber and settle into a single "Recovered" line. And the connection indicator below the composer is a button: click it for the session's real state, with a Reconnect that resumes rather than starting over.
 
-## 📱 iPhone, iPad & Android
-
-Step away from your desk, not your work. The native iOS and Android clients connect to the Codeg you already run — the **Web Service** of your desktop app, or your own `codeg-server` — and from there you start sessions, watch replies and tool calls stream in, answer permission prompts, and browse projects and branches. Nothing moves onto the phone: your files, agent CLIs, and conversations stay on the machine running Codeg, and the access token sits in iOS Keychain or Android Keystore. Both clients are open source ([iOS](https://github.com/xintaofei/codeg-ios), [Android](https://github.com/xintaofei/codeg-android)); pairing takes three steps, covered in [Mobile apps](https://docs.codeg.app/getting-started/installation#mobile-apps).
-
-|                                               iPhone & iPad                                               |                                                         Android                                                         |
-| :-------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------: |
-| <img src="./docs/images/mobile-ios.jpg" alt="Starting a session from the Codeg iOS client" width="248" /> | <img src="./docs/images/mobile-android.jpg" alt="An agent reply streaming into the Codeg Android client" width="248" /> |
-
 ## ✨ Highlights
 
 - **[Conversation Aggregation](https://docs.codeg.app/guide/aggregation)** — import sessions from every supported agent into one unified, searchable workspace, and pick any of them up where you left off
@@ -168,41 +160,18 @@ Step away from your desk, not your work. The native iOS and Android clients conn
 - **[Project Boot](https://docs.codeg.app/guide/project-boot)** — scaffold new projects visually, with live preview, then open them straight in the workspace
 - **[MCP](https://docs.codeg.app/guide/mcp) & [Skills](https://docs.codeg.app/guide/skills)** — local server scan plus registry search/install, and skills managed at global or project scope
 - **[Make it yours](https://docs.codeg.app/reference/settings/appearance)** — recolor any of the twelve themes token by token, set the corner radius app-wide, import and export themes as shadcn JSON, or write your own CSS
-- **[Desktop, Server & Docker](https://docs.codeg.app/getting-started/deployment)** — a native desktop app, a standalone `codeg-server` you reach from any browser, or `docker compose up`
-- **[iPhone, iPad & Android](https://docs.codeg.app/getting-started/installation#mobile-apps)** — native mobile clients that connect to your desktop or server: start sessions, stream replies, approve permissions, and browse projects from anywhere
 
 ## 📦 Install & Run
 
 **Desktop** — download the installer for macOS, Windows, or Linux from [Releases](https://github.com/xintaofei/codeg/releases), then follow [Installation](https://docs.codeg.app/getting-started/installation).
 
-**Server** — run Codeg headless and reach it from any browser. On Linux or macOS:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/xintaofei/codeg/main/install.sh | bash
-CODEG_STATIC_DIR=/usr/local/share/codeg/web codeg-server
-```
-
-On Windows, in PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/xintaofei/codeg/main/install.ps1 | iex
-$env:CODEG_STATIC_DIR="$env:LOCALAPPDATA\codeg\web"; codeg-server
-```
-
-**Docker** — the same server, in one container:
-
-```bash
-docker run -d -p 3080:3080 -v codeg-data:/data ghcr.io/xintaofei/codeg:latest
-```
-
-**Mobile** — install the [iOS app](https://apps.apple.com/app/codeg-client/id6785199071) or the [Android APK](https://github.com/xintaofei/codeg-android/releases/latest), then point it at the **Web Service** of your desktop app or at your own `codeg-server`: URL, token, done. Pairing steps in [Mobile apps](https://docs.codeg.app/getting-started/installation#mobile-apps).
 
 Compose, prebuilt binaries, source builds, and in-place updates are covered in [Deployment](https://docs.codeg.app/getting-started/deployment); environment variables in [Configuration](https://docs.codeg.app/getting-started/configuration). Building Codeg itself: [Development](https://docs.codeg.app/reference/development) and [Architecture](https://docs.codeg.app/reference/architecture).
 
 ## 🔒 Privacy & Security
 
 - Local-first by default for parsing, storage, and project operations — network access happens only on user-triggered actions
-- Web and server modes are guarded by token-based authentication
+- Web mode is guarded by token-based authentication
 - System proxy support for enterprise environments
 
 Details in [Privacy & Security](https://docs.codeg.app/reference/privacy).

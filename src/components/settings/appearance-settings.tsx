@@ -1,6 +1,6 @@
 "use client"
 
-import { LayoutGrid, Monitor, Moon, Sun, Type } from "lucide-react"
+import { LayoutGrid, Maximize2, Monitor, Moon, Sun, Type } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useTheme } from "next-themes"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import {
+  useContentFullWidth,
   useThemeColor,
   useZoomLevel,
   useWelcomeQuickActions,
@@ -38,6 +39,7 @@ export function AppearanceSettings() {
   const { zoomLevel, setZoomLevel } = useZoomLevel()
   const { showWelcomeQuickActions, setShowWelcomeQuickActions } =
     useWelcomeQuickActions()
+  const { contentFullWidth, setContentFullWidth } = useContentFullWidth()
 
   const resolvedThemeLabel =
     resolvedTheme === "dark"
@@ -231,6 +233,37 @@ export function AppearanceSettings() {
               {t("welcomePanel.showQuickActions")}
             </span>
           </label>
+        </section>
+
+        {/* ===== Content width ===== */}
+        <section className="rounded-xl border bg-card p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Maximize2 className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold">
+              {t("contentWidth.sectionTitle")}
+            </h2>
+          </div>
+
+          <p className="text-xs text-muted-foreground leading-5">
+            {t("contentWidth.sectionDescription")}
+          </p>
+
+          <div className="space-y-2">
+            <Select
+              value={contentFullWidth ? "full" : "default"}
+              onValueChange={(value) => setContentFullWidth(value === "full")}
+            >
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder={t("contentWidth.placeholder")} />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="default">
+                  {t("contentWidth.default")}
+                </SelectItem>
+                <SelectItem value="full">{t("contentWidth.full")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </section>
       </div>
     </ScrollArea>

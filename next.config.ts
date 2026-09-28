@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
     // 不再每次从零重编（本机实测基线约 166s）。
     turbopackFileSystemCacheForBuild: true,
   },
+  reactCompiler: true,
   typescript: parallelTypecheck ? { ignoreBuildErrors: true } : undefined,
 }
 

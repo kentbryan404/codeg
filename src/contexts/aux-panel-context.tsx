@@ -22,6 +22,7 @@ export type AuxPanelTab =
   | "file_tree"
   | "changes"
   | "git_log"
+  | "releases"
 
 const STORAGE_KEY = "workspace:right-sidebar"
 

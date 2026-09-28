@@ -433,7 +433,7 @@ pub async fn save_settings_core(
     );
     app_metadata_service::upsert_value(conn, CONFIG_SYNC_SETTINGS_KEY, &serialized)
         .await
-        .map_err(AppCommandError::db)?;
+        .map_err(AppCommandError::from)?;
 
     // Note there is deliberately no "clear the upload baseline" step here.
     // Pointing at a different server, folder, or profile does invalidate the

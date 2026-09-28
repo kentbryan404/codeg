@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::app_error::{AppCommandError, AppErrorCode};
+
 #[derive(Debug, thiserror::Error)]
 pub enum DbError {
     #[error("database error: {0}")]
@@ -27,5 +29,15 @@ impl Serialize for DbError {
         S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_string())
+    }
+}
+
+// Lives here, not in `app_error`, so the foundational error type does not have
+// to know about the database layer. Legal despite `From` being foreign because
+// `DbError` is local to this crate.
+impl From<DbError> for AppCommandError {
+    fn from(value: DbError) -> Self {
+        AppCommandError::new(AppErrorCode::DatabaseError, "Database operation failed")
+            .with_detail(value.to_string())
     }
 }

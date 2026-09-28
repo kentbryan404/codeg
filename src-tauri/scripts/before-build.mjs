@@ -36,6 +36,25 @@ const STEPS = [
   { name: "sidecar", args: ["tauri:prepare-sidecars"] },
 ]
 
+// The whole `tauri build` reads as three stages: the two below (frontend,
+// sidecar) then Tauri's own cargo compile + bundling, which begins the moment
+// this hook exits. We own the first two and announce the third on the way out,
+// so the user sees one coherent "stage N/3" progress instead of only cargo's
+// per-unit bar deep inside stage 3. There is no meaningful global percentage:
+// the stages have wildly different and unpredictable durations, and cargo does
+// not know the total up front — the bar advances per stage, not per unit.
+const STAGE_TOTAL = 3
+const STAGE_LABEL = {
+  frontend: "前端导出",
+  sidecar: "sidecar 编译（并行 typecheck）",
+}
+
+function stageMarker(index, label) {
+  const filled = "█".repeat(index)
+  const empty = "░".repeat(STAGE_TOTAL - index)
+  console.log(`\n[before-build] [${filled}${empty}] ${index}/${STAGE_TOTAL} ${label}`)
+}
+
 function run(step, extraEnv) {
   return new Promise((settle) => {
     const child = spawn("pnpm", step.args, {
@@ -64,6 +83,7 @@ async function main() {
   const started = Date.now()
   let typecheck = null
   for (const step of STEPS) {
+    stageMarker(STEPS.indexOf(step) + 1, STAGE_LABEL[step.name] ?? step.name)
     const t0 = Date.now()
     const code = await run(step, step.env)
     const secs = ((Date.now() - t0) / 1000).toFixed(1)
@@ -99,8 +119,10 @@ async function main() {
     }
     console.log(`[before-build] typecheck done in ${secs.toFixed(1)}s`)
   }
+  // Hand off to Tauri's cargo compile + bundling (stage 3).
+  stageMarker(STAGE_TOTAL, "tauri 编译与打包（cargo + bundling）")
   console.log(
-    `[before-build] total ${((Date.now() - started) / 1000).toFixed(1)}s`
+    `[before-build] 前置阶段合计 ${((Date.now() - started) / 1000).toFixed(1)}s`
   )
 }
 
