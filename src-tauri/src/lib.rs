@@ -40,7 +40,6 @@ pub mod paths;
 pub mod preferences;
 pub mod process;
 mod terminal;
-pub mod thinking_creed;
 pub mod turn_timings;
 pub mod update;
 pub mod web;
@@ -680,8 +679,6 @@ mod tauri_app {
                 // Load saved appearance settings before any window is created.
                 tauri::async_runtime::block_on(windows::load_saved_zoom(&db.conn));
                 tauri::async_runtime::block_on(windows::load_saved_appearance_mode(&db.conn));
-                // 思考信条的水合缓存：出站注入是同步热路径，必须在这里先读一次。
-                tauri::async_runtime::block_on(crate::thinking_creed::load_saved(&db.conn)).ok();
 
                 // System tray: required for the WeChat-style hide-on-close
                 // flow on Windows/Linux (no built-in dock to bring the

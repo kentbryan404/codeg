@@ -2191,6 +2191,7 @@
         "commits": "コミット"
       },
       "thinking": {
+        "title": "モデルの思考",
         "tabLabel": "思考",
         "count": "{count, plural, other {# 件の思考}}",
         "empty": "まだ思考はありません",
@@ -2202,13 +2203,21 @@
   "global": "グローバル",
   "project": "プロジェクト",
   "system": "システム",
-  "none": "有効なルールファイルなし"
+  "none": "有効なルールファイルなし",
+  "agents": "agent 定義",
+"definition": "定義"
 },
-"creed": {
-          "title": "思考の信条",
-          "hint": "毎ターンのプロンプト先頭に付加され、すべてのエージェントが思考前に読みます。",
-          "placeholder": "例：日本語で思考する。結論を先に、根拠を後に…"
-        },
+"mcp": {
+  "title": "MCP サーバー",
+  "count": "{count, plural, other {# 件}}",
+  "configured": "設定済み",
+  "empty": "この agent に MCP サーバーは未設定です",
+  "loading": "スキャン中…"
+},
+  "copy": "思考をコピー",
+  "copied": "コピーしました",
+  "expand": "展開",
+  "collapse": "折りたたむ",
         "metrics": {
           "groupContext": "コンテキスト",
           "groupCache": "キャッシュ",

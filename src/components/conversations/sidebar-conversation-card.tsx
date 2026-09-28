@@ -439,23 +439,6 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
                     >
                       {formatConversationTitle(conversation.title) ||
                         t("untitledConversation")}
-                      {/* Branch suffix, inline right after the title (same
-                          single line — no row-height change). `dir="ltr"` because
-                          a branch name is an LTR identifier even under an RTL
-                          document, like the paths in the hover bubble. A long
-                          title truncates the whole line, so the suffix is the
-                          first thing clipped; the full name stays on the row's
-                          hover bubble (`SidebarConversationHoverDetails`). */}
-                      {branch ? (
-                        <span
-                          dir="ltr"
-                          data-branch={branch}
-                          title={branch}
-                          className="ml-1.5 font-mono text-[0.71875rem] text-muted-foreground/70"
-                        >
-                          {branch}
-                        </span>
-                      ) : null}
                     </span>
                     {/* Re-parented out of a removed worktree: history loads fine,
                     but "continue" may need a fresh session (the agent's files
@@ -591,6 +574,22 @@ export const SidebarConversationCard = memo(function SidebarConversationCard({
                         </span>
                       ) : null}
                     </span>
+                    {/* Branch, sitting immediately AFTER the time/status badge:
+                        the row reads `… 5m  main`, and the branch is the last
+                        piece of metadata before the hover actions take the slot
+                        over. `dir="ltr"` because a branch name is an LTR
+                        identifier even under an RTL document, like the paths in
+                        the hover bubble. */}
+                    {branch ? (
+                      <span
+                        dir="ltr"
+                        data-branch={branch}
+                        title={branch}
+                        className="ml-1.5 max-w-[8rem] shrink-0 truncate font-mono text-[0.6875rem] text-muted-foreground/70"
+                      >
+                        {branch}
+                      </span>
+                    ) : null}
                     {/* Hover quick actions — roots only (sub-sessions opt out above).
                     Default /90 is the lightest muted shade that still clears the
                     3:1 non-text-contrast bar over the row's hover background; hover

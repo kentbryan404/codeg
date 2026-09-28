@@ -2191,6 +2191,7 @@
         "commits": "提交"
       },
       "thinking": {
+        "title": "模型思考",
         "tabLabel": "思考",
         "count": "{count, plural, other {# 段思考}}",
         "empty": "还没有思考内容",
@@ -2202,13 +2203,21 @@
   "global": "全局",
   "project": "项目",
   "system": "系统",
-  "none": "未找到生效的规则文件"
+  "none": "未找到生效的规则文件",
+  "agents": "agent 定义",
+"definition": "定义"
 },
-"creed": {
-          "title": "思考信条",
-          "hint": "每轮对话发送前自动附在提示最前面，所有智能体、每次思考都会读到。",
-          "placeholder": "例如：用中文思考；先给结论，再给依据…"
-        },
+"mcp": {
+  "title": "MCP 服务",
+  "count": "{count, plural, other {# 个服务}}",
+  "configured": "已配置",
+  "empty": "当前 agent 未配置 MCP 服务",
+  "loading": "扫描中…"
+},
+  "copy": "复制思考内容",
+  "copied": "已复制",
+  "expand": "展开",
+  "collapse": "折叠",
         "metrics": {
           "groupContext": "组包",
           "groupCache": "缓存",

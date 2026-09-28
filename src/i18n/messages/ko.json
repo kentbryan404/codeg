@@ -2191,6 +2191,7 @@
         "commits": "커밋"
       },
       "thinking": {
+        "title": "모델 사고",
         "tabLabel": "사고",
         "count": "{count, plural, other {#개 사고}}",
         "empty": "아직 사고 내용이 없습니다",
@@ -2202,13 +2203,21 @@
   "global": "전역",
   "project": "프로젝트",
   "system": "시스템",
-  "none": "적용되는 규칙 파일 없음"
+  "none": "적용되는 규칙 파일 없음",
+  "agents": "agent 정의",
+"definition": "정의"
 },
-"creed": {
-          "title": "사고 신조",
-          "hint": "모든 프롬프트 맨 앞에 붙어 모든 에이전트가 사고 전에 읽습니다.",
-          "placeholder": "예: 한국어로 사고하기; 결론 먼저, 근거는 그다음…"
-        },
+"mcp": {
+  "title": "MCP 서버",
+  "count": "{count, plural, other {#개}}",
+  "configured": "설정됨",
+  "empty": "이 agent 에 구성된 MCP 서버가 없습니다",
+  "loading": "스캔 중…"
+},
+  "copy": "사고 복사",
+  "copied": "복사됨",
+  "expand": "펼치기",
+  "collapse": "접기",
         "metrics": {
           "groupContext": "컨텍스트",
           "groupCache": "캐시",

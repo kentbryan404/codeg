@@ -2,8 +2,6 @@ import { describe, expect, it, vi } from "vitest"
 import { listDirectoryWithFiles, readFilePreview } from "@/lib/api"
 
 vi.mock("@/lib/api", () => ({
-  getThinkingCreed: vi.fn(),
-  setThinkingCreed: vi.fn(),
   listDirectoryWithFiles: vi.fn(),
   readFilePreview: vi.fn(),
 }))
@@ -15,6 +13,7 @@ import {
   collectThinkingSegments,
   firstPresentRule,
   formatCompactTokens,
+  previewLine,
   resolveFileInDir,
   turnMetrics,
 } from "./aux-panel-thinking-tab"
@@ -276,5 +275,16 @@ describe("resolveFileInDir", () => {
     vi.mocked(listDirectoryWithFiles).mockResolvedValue([])
     vi.mocked(readFilePreview).mockRejectedValue(new Error("nope"))
     await expect(resolveFileInDir("/repo", ["AGENTS.md"])).resolves.toBeNull()
+  })
+})
+
+describe("previewLine", () => {
+  it("strips markdown decoration and takes the first real line", () => {
+    expect(previewLine("\n## Step one\nmore")).toBe("Step one")
+    expect(previewLine("- `read` the file")).toBe("read` the file")
+  })
+
+  it("caps the line so a folded row stays one row", () => {
+    expect(previewLine("x".repeat(500)).length).toBe(161)
   })
 })

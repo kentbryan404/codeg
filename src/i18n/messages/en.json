@@ -2191,6 +2191,7 @@
         "commits": "Commits"
       },
       "thinking": {
+        "title": "Model thinking",
         "tabLabel": "Thinking",
         "count": "{count, plural, one {# thought} other {# thoughts}}",
         "empty": "No thinking yet",
@@ -2202,13 +2203,21 @@
   "global": "Global",
   "project": "Project",
   "system": "System",
-  "none": "No effective rules file"
+  "none": "No effective rules file",
+  "agents": "Agent definitions",
+"definition": "definition"
 },
-"creed": {
-          "title": "Thinking Creed",
-          "hint": "Prepended to every prompt for every agent, so the model reads it before each thinking step.",
-          "placeholder": "e.g. Think in Chinese; state the conclusion first, then the evidence…"
-        },
+"mcp": {
+  "title": "MCP servers",
+  "count": "{count, plural, one {# server} other {# servers}}",
+  "configured": "configured",
+  "empty": "No MCP server configured for this agent",
+  "loading": "Scanning…"
+},
+  "copy": "Copy reasoning",
+  "copied": "Copied",
+  "expand": "Expand",
+  "collapse": "Collapse",
         "metrics": {
           "groupContext": "Context",
           "groupCache": "Cache",

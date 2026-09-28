@@ -2191,6 +2191,7 @@
         "commits": "Confirmações"
       },
       "thinking": {
+        "title": "Pensamento do modelo",
         "tabLabel": "Pensamento",
         "count": "{count, plural, one {# pensamento} other {# pensamentos}}",
         "empty": "Ainda sem pensamento",
@@ -2202,13 +2203,21 @@
   "global": "Global",
   "project": "Projeto",
   "system": "Sistema",
-  "none": "Nenhum arquivo de regras em vigor"
+  "none": "Nenhum arquivo de regras em vigor",
+  "agents": "Definições de agentes",
+"definition": "definição"
 },
-"creed": {
-          "title": "Credo de pensamento",
-          "hint": "Prefixado a cada prompt para todos os agentes, lido antes de cada etapa de raciocínio.",
-          "placeholder": "ex.: Pense em chinês; conclusão primeiro, evidências depois…"
-        },
+"mcp": {
+  "title": "Servidores MCP",
+  "count": "{count, plural, one {# servidor} other {# servidores}}",
+  "configured": "configurado",
+  "empty": "Nenhum servidor MCP para este agente",
+  "loading": "Analisando…"
+},
+  "copy": "Copiar raciocínio",
+  "copied": "Copiado",
+  "expand": "Expandir",
+  "collapse": "Recolher",
         "metrics": {
           "groupContext": "Contexto",
           "groupCache": "Cache",

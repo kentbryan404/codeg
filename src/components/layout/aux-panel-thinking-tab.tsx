@@ -7,29 +7,35 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type ReactNode,
 } from "react"
 import {
   Brain,
+  Check,
   ChevronDown,
   ChevronRight,
   ChevronsDown,
+  Copy,
   Database,
   FileText,
   ListChevronsDownUp,
   ListChevronsUpDown,
-  ScrollText,
+  Plug,
   type LucideIcon,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
-  getThinkingCreed,
   listDirectoryWithFiles,
+  mcpScanLocal,
   readFilePreview,
-  setThinkingCreed,
 } from "@/lib/api"
-import type { AgentType, FolderDetail, MessageTurn } from "@/lib/types"
+import type {
+  AgentType,
+  FolderDetail,
+  LocalMcpServer,
+  McpAppType,
+  MessageTurn,
+} from "@/lib/types"
 import { expandHomePath } from "@/lib/file-open-target"
 import { joinFsPath } from "@/lib/path-utils"
 import { useTabStore } from "@/contexts/tab-context"
@@ -244,27 +250,14 @@ export function collectThinkingSegments(
  * and the fold chevron. Reads `isOpen` from the Reasoning context so the
  * chevron tracks external (expand-all / collapse-all) changes too.
  */
-function EpisodeHeader({
-  episode,
-  clock,
-  live,
-}: {
-  episode: number
-  clock: string | null
-  live: boolean
-}) {
-  const { isOpen } = useReasoning()
+function EpisodeHeader({ episode, live }: { episode: number; live: boolean }) {
   const tReasoning = useTranslations("Folder.chat.reasoning")
+  const { isOpen } = useReasoning()
   return (
     <>
       <span className="shrink-0 font-mono text-[0.6875rem] tabular-nums text-muted-foreground/70">
         #{episode}
       </span>
-      {clock && (
-        <time className="shrink-0 text-[0.6875rem] tabular-nums text-muted-foreground/60">
-          {clock}
-        </time>
-      )}
       {live && (
         <Shimmer
           duration={1}
@@ -414,13 +407,27 @@ function MetricCards({ metrics }: { metrics: TurnMetrics }) {
  * and `metrics` is a per-turn cached object, so finished cards bail out even
  * when the stream dispatches ~60 times a second.
  */
+/**
+ * First-line preview for a FOLDED episode: markdown decoration stripped, hard
+ * capped. Readability is mostly scannability — a folded row must still say what
+ * was thought, not merely that something was thought at 14:22.
+ */
+export function previewLine(text: string, max = 160): string {
+  const line =
+    text
+      .slice(0, 400)
+      .split("\n")
+      .find((l) => l.trim()) ?? ""
+  const stripped = line.replace(/^[\s>#*\-+`]+/, "").trim()
+  return stripped.length > max ? `${stripped.slice(0, max)}…` : stripped
+}
+
 const ThinkingEpisode = memo(function ThinkingEpisode({
   text,
   live,
   open,
   onOpenChange,
   episode,
-  clock,
   metrics,
 }: {
   text: string
@@ -428,11 +435,24 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
   open: boolean
   onOpenChange: (open: boolean) => void
   episode: number
-  clock: string | null
   metrics: TurnMetrics
 }) {
   const t = useTranslations("Folder.auxPanel.thinking.metrics")
+  const tEpisode = useTranslations("Folder.auxPanel.thinking")
   const tUsage = useTranslations("TokenUsage")
+  const [copied, setCopied] = useState(false)
+  const preview = useMemo(() => previewLine(text), [text])
+  const handleCopy = useCallback(() => {
+    void navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 1200)
+      })
+      .catch(() => {
+        // Clipboard denied — the button simply does nothing.
+      })
+  }, [text])
   return (
     <Reasoning
       isStreaming={live}
@@ -440,13 +460,22 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
       onOpenChange={onOpenChange}
       className="flex flex-col"
     >
-      <ReasoningTrigger className="order-1 items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/40">
-        <EpisodeHeader episode={episode} clock={clock} live={live} />
+      <ReasoningTrigger
+        className="order-1 items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+        title={open ? tEpisode("collapse") : tEpisode("expand")}
+      >
+        <EpisodeHeader episode={episode} live={live} />
       </ReasoningTrigger>
+      {/* Folded rows keep a one-line gist: the stream stays scannable. */}
+      {!open && preview ? (
+        <p className="order-2 truncate px-1 pt-0.5 text-[0.75rem] leading-5 text-muted-foreground/80">
+          {preview}
+        </p>
+      ) : null}
       {/* At-a-glance strip, rendered as the post's FOOTER (Moments style).
           Five spans, all from the cached metrics object — no formatting per
           streamed delta. */}
-      <div className="order-last mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-1 font-mono text-[0.625rem] text-muted-foreground/70">
+      <div className="order-last mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-1 font-mono text-[0.625rem] text-muted-foreground/80">
         <span title={tUsage("inputTokens")}>
           ↓{formatCompactTokens(metrics.inputTokens)}
         </span>
@@ -465,6 +494,19 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
             : `${(metrics.durationMs / 1000).toFixed(1)}s`}
         </span>
         <span title={t("toolCalls")}>⚙{metrics.toolCalls}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          title={copied ? tEpisode("copied") : tEpisode("copy")}
+          aria-label={copied ? tEpisode("copied") : tEpisode("copy")}
+          className="ml-auto inline-flex h-4 shrink-0 items-center gap-1 rounded px-1 text-[0.625rem] text-muted-foreground/80 transition-colors hover:text-foreground"
+        >
+          {copied ? (
+            <Check className="h-3 w-3" />
+          ) : (
+            <Copy className="h-3 w-3" />
+          )}
+        </button>
       </div>
       {/* The grouped info cards ride with the fold (ReasoningContent only takes
           a string body), so they appear exactly when the card is expanded. */}
@@ -473,7 +515,7 @@ const ThinkingEpisode = memo(function ThinkingEpisode({
           <MetricCards metrics={metrics} />
         </div>
       )}
-      <ReasoningContent className="order-2 mt-1 px-1 text-[0.8125rem]">
+      <ReasoningContent className="order-2 mt-1 px-1 text-[0.8125rem] leading-relaxed">
         {text}
       </ReasoningContent>
     </Reasoning>
@@ -626,7 +668,13 @@ const DISCIPLINE_FILES: Record<
     system: [["~/.codex", "config.toml"]],
   },
   open_code: {
-    global: [["~/.config/opencode", "AGENTS.md"]],
+    // opencode reads its own global AGENTS.md first and still honours the
+    // shared ~/.claude/CLAUDE.md as a fallback (the two are independent files,
+    // so both are listed and the first that exists wins per the resolver).
+    global: [
+      ["~/.config/opencode", "AGENTS.md"],
+      ["~/.claude", "CLAUDE.md"],
+    ],
     system: [["~/.config/opencode", "opencode.json"]],
   },
   gemini: {
@@ -748,6 +796,69 @@ function FoldHeader({
   )
 }
 
+/**
+ * Directories holding an agent's own DEFINITION files (`*.md`), best effort per
+ * CLI convention. These are not "rules" in the prompt sense — they are the
+ * custom agents/prompts the CLI can invoke — so they get their own labelled
+ * group inside rules discipline. Unknown/custom agents simply list nothing.
+ */
+const AGENT_DEF_DIRS: Record<string, string[]> = {
+  claude_code: ["~/.claude/agents"],
+  codex: ["~/.codex/agents", "~/.codex/prompts"],
+  open_code: ["~/.config/opencode/agent", "~/.config/opencode/agents"],
+  gemini: ["~/.gemini/agents"],
+  cursor: ["~/.cursor/agents"],
+  cline: ["~/.cline/agents"],
+  kimi_code: ["~/.kimi/agents"],
+}
+
+/** All non-hidden `*.md` files in one directory (non-recursive). */
+async function listMarkdownFiles(
+  absDir: string
+): Promise<{ name: string; path: string }[]> {
+  try {
+    const items = await listDirectoryWithFiles(absDir)
+    return items
+      .filter((item) => !item.isDir && /\.md$/i.test(item.name))
+      .map((item) => ({ name: item.name, path: item.path }))
+  } catch {
+    return []
+  }
+}
+
+/** The agent-definition docs in effect for this agent, keyed by agent. */
+function useAgentDocs(
+  agentType: AgentType | null
+): { name: string; path: string }[] {
+  const dirs = agentType ? AGENT_DEF_DIRS[agentType] : undefined
+  const key = agentType ?? ""
+  const [resolved, setResolved] = useState<{
+    key: string
+    files: { name: string; path: string }[]
+  } | null>(null)
+
+  useEffect(() => {
+    if (!dirs) return
+    let cancelled = false
+    void Promise.all(
+      dirs.map(async (dir) => listMarkdownFiles(await expandHomePath(dir)))
+    )
+      .then((groups) => {
+        if (cancelled) return
+        setResolved({ key, files: groups.flat().slice(0, 24) })
+      })
+      .catch(() => {
+        if (!cancelled) setResolved({ key, files: [] })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [key, dirs])
+
+  if (resolved == null || resolved.key !== key) return []
+  return resolved.files
+}
+
 function RulesDiscipline({
   folder,
   projectRules,
@@ -760,6 +871,7 @@ function RulesDiscipline({
   const t = useTranslations("Folder.auxPanel.thinking.discipline")
   const { openFilePreview } = useWorkspaceActions()
   const extra = useDisciplineFiles(agentType)
+  const agentDocs = useAgentDocs(agentType)
   const [open, setOpen] = useState(true)
 
   const entries: {
@@ -807,104 +919,32 @@ function RulesDiscipline({
             </span>
           </button>
         ))}
-    </div>
-  )
-}
-
-/** How long typing pauses before the creed is written to the backend. */
-const CREED_SAVE_DEBOUNCE_MS = 600
-
-/**
- * The Thinking Creed card: free-form text the backend prepends to EVERY
- * outbound prompt (see `crate::thinking_creed`), so the model reads it before
- * each turn. Deliberately shown in the thinking tab — it is the one screen
- * about how the model reasons.
- *
- * Saves are debounced; an unmount flushes a pending edit so closing the panel
- * mid-sentence never drops it.
- */
-function ThinkingCreedCard() {
-  const t = useTranslations("Folder.auxPanel.thinking.creed")
-  const [creed, setCreed] = useState("")
-  const [loaded, setLoaded] = useState(false)
-  // Folded by default: the creed is a long-lived setting, not something read
-  // every visit, and unfolded it takes half the viewport.
-  const [open, setOpen] = useState(false)
-  const creedRef = useRef("")
-  const timerRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getThinkingCreed()
-      .then((value) => {
-        if (cancelled) return
-        creedRef.current = value
-        setCreed(value)
-        setLoaded(true)
-      })
-      .catch(() => {
-        // A failed read must not disable the field; an empty creed is the
-        // default anyway and the first edit writes the real value.
-        if (!cancelled) setLoaded(true)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const flush = useCallback(() => {
-    if (timerRef.current == null) return
-    window.clearTimeout(timerRef.current)
-    timerRef.current = null
-    void setThinkingCreed(creedRef.current).catch(() => {})
-  }, [])
-
-  // Flush (not drop) a pending edit when the panel closes.
-  useEffect(() => flush, [flush])
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      const next = event.target.value
-      creedRef.current = next
-      setCreed(next)
-      if (timerRef.current != null) window.clearTimeout(timerRef.current)
-      timerRef.current = window.setTimeout(flush, CREED_SAVE_DEBOUNCE_MS)
-    },
-    [flush]
-  )
-
-  return (
-    // Foldable card. Expanded it fills HALF the viewport height (`h-[50vh]`,
-    // the textarea takes the remainder), which is the point of folding it: a
-    // full-screen-half editor for a document the model reads every turn, versus
-    // a header row when the user is reading the thinking stream instead.
-    <div
-      className={cn(
-        "flex shrink-0 flex-col overflow-hidden",
-        open && "h-[50vh]"
-      )}
-    >
-      <FoldHeader
-        icon={ScrollText}
-        title={t("title")}
-        open={open}
-        onToggle={() => setOpen((prev) => !prev)}
-      />
-      {open && (
-        <div className="flex min-h-0 flex-1 flex-col gap-1 px-3 pb-2">
-          <p className="shrink-0 text-[0.6875rem] leading-snug text-muted-foreground/80">
-            {t("hint")}
-          </p>
-          <textarea
-            value={creed}
-            onChange={handleChange}
-            onBlur={flush}
-            disabled={!loaded}
-            placeholder={t("placeholder")}
-            className="min-h-0 w-full flex-1 resize-none rounded-lg border border-input bg-transparent px-2 py-1.5 text-xs leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:opacity-60"
-          />
-        </div>
-      )}
+      {open && agentDocs.length > 0 ? (
+        <>
+          <div className="border-t border-border/50 px-2 pt-1 text-[0.625rem] text-muted-foreground/60">
+            {t("agents")}
+          </div>
+          {agentDocs.map((doc) => (
+            <button
+              key={`agent-doc-${doc.path}`}
+              type="button"
+              title={doc.path}
+              onClick={() =>
+                void openFilePreview(doc.path, { folderId: folder?.id })
+              }
+              className="flex w-full items-center gap-1.5 px-2 py-[0.1875rem] text-left transition-colors hover:bg-muted"
+            >
+              <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <span className="truncate font-mono text-[0.71875rem] text-foreground/80">
+                {doc.name}
+              </span>
+              <span className="ml-auto shrink-0 text-[0.625rem] text-muted-foreground/70">
+                {t("definition")}
+              </span>
+            </button>
+          ))}
+        </>
+      ) : null}
     </div>
   )
 }
@@ -960,9 +1000,9 @@ export function collectMemoryEntries(
  */
 function MemoryPanel({ timeline }: { timeline: ConversationTimelineTurn[] }) {
   const t = useTranslations("Folder.auxPanel.thinking.memory")
-  // Open by default: this is the model's working memory for the session, useful
-  // at a glance. Dropping it to a header row is one click.
-  const [open, setOpen] = useState(true)
+  // Folded by default, like every other panel in this tab: the header shows the
+  // count, one click opens the list.
+  const [open, setOpen] = useState(false)
   const entries = useMemo(() => collectMemoryEntries(timeline), [timeline])
 
   return (
@@ -1033,6 +1073,100 @@ function formatClock(at: string | null): string | null {
 }
 
 /**
+ * The MCP servers the CURRENT agent has configured, under the memory panel.
+ *
+ * Scope note: this is the agent's own MCP configuration (the same scan the
+ * Settings → MCP page reads), i.e. what the session loads. Per-server CONNECTION
+ * state is not on the ACP wire — an agent that spawns an MCP server reports
+ * nothing back about it — so each row states "configured" and nothing more.
+ * Inventing a green dot here would be a lie.
+ */
+function McpPanel({ agentType }: { agentType: AgentType | null }) {
+  const t = useTranslations("Folder.auxPanel.thinking.mcp")
+  const [open, setOpen] = useState(false)
+  const [servers, setServers] = useState<LocalMcpServer[] | null>(null)
+
+  // Fetched on first expand only — the scan reads the agents' config files.
+  useEffect(() => {
+    if (!open || servers != null) return
+    let cancelled = false
+    mcpScanLocal()
+      .then((scan) => {
+        if (!cancelled) setServers(scan.servers)
+      })
+      .catch(() => {
+        if (!cancelled) setServers([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, servers])
+
+  const mine = useMemo(
+    () =>
+      (servers ?? []).filter(
+        (server) =>
+          agentType != null && server.apps.includes(agentType as McpAppType)
+      ),
+    [servers, agentType]
+  )
+
+  const summary = (server: LocalMcpServer): string => {
+    const spec = server.spec as Record<string, unknown>
+    const command = typeof spec.command === "string" ? spec.command : null
+    const url = typeof spec.url === "string" ? spec.url : null
+    return command ?? url ?? "--"
+  }
+
+  return (
+    <div className="shrink-0">
+      <FoldHeader
+        icon={Plug}
+        title={t("title")}
+        open={open}
+        onToggle={() => setOpen((prev) => !prev)}
+        trailing={
+          servers == null ? null : (
+            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+              {t("count", { count: mine.length })}
+            </span>
+          )
+        }
+      />
+      {open &&
+        (servers == null ? (
+          <div className="px-3 pb-1 text-[0.625rem] text-muted-foreground/60">
+            {t("loading")}
+          </div>
+        ) : mine.length === 0 ? (
+          <div className="px-3 pb-1 text-[0.625rem] text-muted-foreground/60">
+            {t("empty")}
+          </div>
+        ) : (
+          <ul className="pb-1">
+            {mine.map((server) => (
+              <li
+                key={server.id}
+                className="flex items-center gap-2 px-3 py-[0.1875rem] text-[0.6875rem]"
+              >
+                <span className="shrink-0 font-mono text-foreground/80">
+                  {server.id}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground/60">
+                  {summary(server)}
+                </span>
+                <span className="shrink-0 text-[0.625rem] text-muted-foreground/70">
+                  {t("configured")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ))}
+    </div>
+  )
+}
+
+/**
  * The aux-panel "Thinking" tab: the active conversation's COMPLETE reasoning
  * stream, live.
  *
@@ -1054,7 +1188,6 @@ function formatClock(at: string | null): string | null {
  */
 export function ThinkingTab() {
   const t = useTranslations("Folder.auxPanel.thinking")
-  const tReasoning = useTranslations("Folder.chat.reasoning")
   const tDetails = useTranslations("Folder.sessionDetails")
   const { isOpen, activeTab } = useAuxPanelContext()
 
@@ -1134,10 +1267,11 @@ export function ThinkingTab() {
   }, [segments, active])
 
   // ── Fold state ────────────────────────────────────────────────────────────
-  // EVERYTHING folded by default, including the live episode — the stream stays
-  // one line per thought until the reader opens one (or Expand all). One
-  // list-wide flag plus per-card overrides: the button clears the overrides (so
-  // it always has the last word), an individual click records one.
+  // Folded by default, EXCEPT the newest episode while the thinking area itself
+  // is open: the live tail then streams expanded, so the reader watches the
+  // current thought arrive without touching anything. Older rows stay one line;
+  // a manual click (or Expand all) overrides this, and collapsing the whole
+  // area folds everything.
   // The whole thinking area (header strip + timeline) folds like the memory
   // panel below it.
   const [thinkingOpen, setThinkingOpen] = useState(true)
@@ -1146,8 +1280,9 @@ export function ThinkingTab() {
     ReadonlyMap<string, boolean>
   >(() => new Map())
   const episodeOpen = useCallback(
-    (key: string) => openOverrides.get(key) ?? allExpanded,
-    [openOverrides, allExpanded]
+    (key: string, latest: boolean) =>
+      openOverrides.get(key) ?? (allExpanded || (latest && thinkingOpen)),
+    [openOverrides, allExpanded, thinkingOpen]
   )
   const setEpisodeOpen = useCallback((key: string, open: boolean) => {
     setOpenOverrides((prev) => {
@@ -1186,7 +1321,6 @@ export function ThinkingTab() {
         projectRules={rules}
         agentType={activeConversationTab.agentType}
       />
-      <ThinkingCreedCard />
 
       {/* Stream header: what the stream is doing right now, where it is, and the
           fold for the WHOLE thinking area (like the memory panel below).
@@ -1199,19 +1333,26 @@ export function ThinkingTab() {
           className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-3 text-left transition-colors hover:bg-muted/40"
         >
           <Brain className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          {isStreaming ? (
+          <span className="shrink-0 text-xs font-medium">{t("title")}</span>
+          {/* Same shape as the memory panel: title, then the count. While the
+              agent is streaming, the COUNT carries the shimmer — the live
+              state shows on the number instead of replacing the row with a
+              differently-worded status. */}
+          {segments.length === 0 ? (
+            <span className="truncate text-[0.6875rem] text-muted-foreground/70">
+              {t("empty")}
+            </span>
+          ) : isStreaming ? (
             <Shimmer
               duration={1}
               shineColor="var(--primary)"
-              className="truncate text-xs"
+              className="shrink-0 text-[0.6875rem]"
             >
-              {tReasoning("thinking")}
+              {t("count", { count: segments.length })}
             </Shimmer>
           ) : (
-            <span className="truncate text-xs text-muted-foreground">
-              {segments.length > 0
-                ? t("count", { count: segments.length })
-                : t("empty")}
+            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+              {t("count", { count: segments.length })}
             </span>
           )}
         </button>
@@ -1279,15 +1420,21 @@ export function ThinkingTab() {
               paint of episodes scrolled out of view (native virtualization);
               `contain-intrinsic-size` keeps the scrollbar and the tail-follow
               honest by remembering each episode's real height once rendered. */}
-            <ol className="relative ml-1.5 border-l border-border/70 pt-2 pb-1 pr-3">
-              {segments.map((segment) => {
+            <ol className="relative ml-[3.5rem] border-l border-border/70 pt-2 pb-1 pr-3">
+              {segments.map((segment, index) => {
                 const clock = formatClock(segment.at)
+                const isLatest = index === segments.length - 1
                 return (
                   <li
                     key={segment.key}
                     data-thinking-episode={segment.episode}
                     className="relative ml-4 border-b border-border/60 pb-3 last:border-b-0 last:pb-1 [content-visibility:auto] [contain-intrinsic-size:auto_8rem]"
                   >
+                    {/* Timeline gutter: the clock is the axis label, pinned to
+                        the rail (right-aligned) at the row's top line. */}
+                    <time className="absolute -left-14 top-1 w-10 shrink-0 text-right font-mono text-[0.625rem] tabular-nums text-muted-foreground/60">
+                      {clock ?? ""}
+                    </time>
                     <span
                       aria-hidden
                       className={cn(
@@ -1298,10 +1445,9 @@ export function ThinkingTab() {
                     <ThinkingEpisode
                       text={segment.text}
                       live={segment.live}
-                      open={episodeOpen(segment.key)}
+                      open={episodeOpen(segment.key, isLatest)}
                       onOpenChange={(open) => setEpisodeOpen(segment.key, open)}
                       episode={segment.episode}
-                      clock={clock}
                       metrics={segment.metrics}
                     />
                   </li>
@@ -1313,6 +1459,7 @@ export function ThinkingTab() {
 
       {/* Below the stream, as asked: the current session's memory index. */}
       <MemoryPanel timeline={timeline} />
+      <McpPanel agentType={activeConversationTab.agentType} />
     </div>
   )
 }

@@ -2191,6 +2191,7 @@
         "commits": "Validations"
       },
       "thinking": {
+        "title": "Réflexion du modèle",
         "tabLabel": "Réflexion",
         "count": "{count, plural, one {# réflexion} other {# réflexions}}",
         "empty": "Pas encore de réflexion",
@@ -2202,13 +2203,21 @@
   "global": "Global",
   "project": "Projet",
   "system": "Système",
-  "none": "Aucun fichier de règles actif"
+  "none": "Aucun fichier de règles actif",
+  "agents": "Définitions d'agents",
+"definition": "définition"
 },
-"creed": {
-          "title": "Credo de réflexion",
-          "hint": "Préfixé à chaque prompt pour tous les agents, lu avant chaque étape de réflexion.",
-          "placeholder": "ex. Réfléchis en chinois ; conclusion d'abord, preuves ensuite…"
-        },
+"mcp": {
+  "title": "Serveurs MCP",
+  "count": "{count, plural, one {# serveur} other {# serveurs}}",
+  "configured": "configuré",
+  "empty": "Aucun serveur MCP pour cet agent",
+  "loading": "Analyse…"
+},
+  "copy": "Copier la réflexion",
+  "copied": "Copié",
+  "expand": "Développer",
+  "collapse": "Replier",
         "metrics": {
           "groupContext": "Contexte",
           "groupCache": "Cache",

@@ -9207,20 +9207,11 @@ pub(crate) fn map_prompt_blocks(blocks: Vec<PromptInputBlock>) -> Vec<ContentBlo
 /// companion's delegation group — that flag is the only gate, and it is already
 /// the injection gate's own verdict (`supports_mcp` + `agent_delivers_wire_mcp`
 /// + the delegation feature being on).
-///
-/// The user's Thinking Creed (when set) is prepended HERE, next to the routing
-/// block: both are machine-added content that must reach the model without
-/// entering the user's message, its preview, the ledger, or the cross-client
-/// broadcast. Reading it is a cached global (see `crate::thinking_creed`), so
-/// this hot path stays synchronous.
 fn prepare_agent_bound_prompt(
     agent_type: AgentType,
     mut blocks: Vec<PromptInputBlock>,
     delegation_enabled: bool,
 ) -> Vec<ContentBlock> {
-    if let Some(creed) = crate::thinking_creed::creed_block() {
-        blocks.insert(0, PromptInputBlock::Text { text: creed });
-    }
     append_agent_routes(&mut blocks, delegation_enabled);
     if agent_type == AgentType::Grok {
         blocks = normalize_grok_image_blocks(blocks);

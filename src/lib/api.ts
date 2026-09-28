@@ -3330,16 +3330,6 @@ export async function quickMessagesReorder(ids: number[]): Promise<void> {
   return getTransport().call("quick_messages_reorder", { ids })
 }
 
-// Thinking Creed — the text every outbound prompt is prefixed with.
-
-export async function getThinkingCreed(): Promise<string> {
-  return getTransport().call("thinking_creed_get")
-}
-
-export async function setThinkingCreed(creed: string): Promise<void> {
-  return getTransport().call("thinking_creed_set", { creed })
-}
-
 // Token usage dashboard
 
 export async function tokenUsageReport(

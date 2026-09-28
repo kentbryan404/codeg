@@ -2191,6 +2191,7 @@
         "commits": "提交"
       },
       "thinking": {
+        "title": "模型思考",
         "tabLabel": "思考",
         "count": "{count, plural, other {# 段思考}}",
         "empty": "還沒有思考內容",
@@ -2202,13 +2203,21 @@
   "global": "全域",
   "project": "專案",
   "system": "系統",
-  "none": "未找到生效的規則檔"
+  "none": "未找到生效的規則檔",
+  "agents": "agent 定義",
+"definition": "定義"
 },
-"creed": {
-          "title": "思考信條",
-          "hint": "每輪對話送出前自動附在提示最前面，所有智慧體、每次思考都會讀到。",
-          "placeholder": "例如：用中文思考；先給結論，再給依據…"
-        },
+"mcp": {
+  "title": "MCP 服務",
+  "count": "{count, plural, other {# 個服務}}",
+  "configured": "已設定",
+  "empty": "目前 agent 未設定 MCP 服務",
+  "loading": "掃描中…"
+},
+  "copy": "複製思考內容",
+  "copied": "已複製",
+  "expand": "展開",
+  "collapse": "摺疊",
         "metrics": {
           "groupContext": "組包",
           "groupCache": "快取",
