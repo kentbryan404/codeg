@@ -2089,7 +2089,8 @@
       "typeToSearch": "输入关键词搜索会话",
       "typeToSearchFiles": "输入关键词搜索文件或目录",
       "noResults": "未找到结果。",
-      "untitledConversation": "未命名会话"
+      "untitledConversation": "未命名会话",
+      "contentMatches": "消息内容"
     },
     "folderTitleBar": {
       "showSidebar": "显示侧边栏",
@@ -2211,6 +2212,12 @@
   "title": "MCP 服务",
   "count": "{count, plural, other {# 个服务}}",
   "configured": "已配置",
+  "edit": "编辑",
+  "save": "保存",
+  "cancel": "取消",
+  "saving": "保存中…",
+  "invalidJson": "JSON 无效",
+  "saveFailed": "保存失败",
   "empty": "当前 agent 未配置 MCP 服务",
   "loading": "扫描中…"
 },

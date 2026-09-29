@@ -2089,7 +2089,8 @@
       "typeToSearch": "Tapez pour rechercher des conversations",
       "typeToSearchFiles": "Tapez pour rechercher des fichiers ou répertoires",
       "noResults": "Aucun résultat trouvé.",
-      "untitledConversation": "Conversation sans titre"
+      "untitledConversation": "Conversation sans titre",
+      "contentMatches": "Dans les messages"
     },
     "folderTitleBar": {
       "showSidebar": "Afficher la barre latérale",
@@ -2211,6 +2212,12 @@
   "title": "Serveurs MCP",
   "count": "{count, plural, one {# serveur} other {# serveurs}}",
   "configured": "configuré",
+  "edit": "Modifier",
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "saving": "Enregistrement…",
+  "invalidJson": "JSON invalide",
+  "saveFailed": "Échec de l'enregistrement",
   "empty": "Aucun serveur MCP pour cet agent",
   "loading": "Analyse…"
 },

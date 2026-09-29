@@ -2089,7 +2089,8 @@
       "typeToSearch": "輸入關鍵字搜尋會話",
       "typeToSearchFiles": "輸入關鍵字搜尋檔案或目錄",
       "noResults": "找不到結果。",
-      "untitledConversation": "未命名會話"
+      "untitledConversation": "未命名會話",
+      "contentMatches": "訊息內容"
     },
     "folderTitleBar": {
       "showSidebar": "顯示側邊欄",
@@ -2211,6 +2212,12 @@
   "title": "MCP 服務",
   "count": "{count, plural, other {# 個服務}}",
   "configured": "已設定",
+  "edit": "編輯",
+  "save": "儲存",
+  "cancel": "取消",
+  "saving": "儲存中…",
+  "invalidJson": "JSON 無效",
+  "saveFailed": "儲存失敗",
   "empty": "目前 agent 未設定 MCP 服務",
   "loading": "掃描中…"
 },

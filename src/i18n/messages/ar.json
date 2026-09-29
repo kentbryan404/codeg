@@ -2089,7 +2089,8 @@
       "typeToSearch": "اكتب للبحث في المحادثات",
       "typeToSearchFiles": "اكتب للبحث في الملفات أو المجلدات",
       "noResults": "لم يتم العثور على نتائج.",
-      "untitledConversation": "محادثة بدون عنوان"
+      "untitledConversation": "محادثة بدون عنوان",
+      "contentMatches": "في الرسائل"
     },
     "folderTitleBar": {
       "showSidebar": "إظهار الشريط الجانبي",
@@ -2211,6 +2212,12 @@
   "title": "خوادم MCP",
   "count": "{count, plural, other {# خادم}}",
   "configured": "مُهيأ",
+  "edit": "تعديل",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "saving": "جارٍ الحفظ…",
+  "invalidJson": "JSON غير صالح",
+  "saveFailed": "فشل الحفظ",
   "empty": "لا يوجد خادم MCP لهذا الوكيل",
   "loading": "جارٍ الفحص…"
 },

@@ -2089,7 +2089,8 @@
       "typeToSearch": "Type to search conversations",
       "typeToSearchFiles": "Type to search files or directories",
       "noResults": "No results found.",
-      "untitledConversation": "Untitled conversation"
+      "untitledConversation": "Untitled conversation",
+      "contentMatches": "In messages"
     },
     "folderTitleBar": {
       "showSidebar": "Show Sidebar",
@@ -2211,6 +2212,12 @@
   "title": "MCP servers",
   "count": "{count, plural, one {# server} other {# servers}}",
   "configured": "configured",
+  "edit": "Edit",
+  "save": "Save",
+  "cancel": "Cancel",
+  "saving": "Saving…",
+  "invalidJson": "Invalid JSON",
+  "saveFailed": "Save failed",
   "empty": "No MCP server configured for this agent",
   "loading": "Scanning…"
 },

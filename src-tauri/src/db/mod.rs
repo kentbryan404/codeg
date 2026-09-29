@@ -127,3 +127,86 @@ async fn apply_sqlite_pragmas(conn: &DatabaseConnection) -> Result<(), DbError> 
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod fts_probe {
+    //! Probe the bundled SQLite for the conversation-search prerequisites:
+    //! FTS5 itself and the `trigram` tokenizer (the only index-side tokenizer
+    //! that makes CJK substrings searchable without a custom C tokenizer).
+    //! Also pins trigram's known floor — queries shorter than 3 characters
+    //! return nothing — which the query layer must handle with a LIKE
+    //! fallback.
+    use sea_orm::{ConnectionTrait, DbBackend, Statement};
+
+    async fn exec(db: &crate::db::AppDatabase, sql: &str) {
+        db.conn
+            .execute(Statement::from_string(DbBackend::Sqlite, sql.to_owned()))
+            .await
+            .unwrap_or_else(|e| panic!("sql failed: {sql}\n{e}"));
+    }
+
+    #[tokio::test]
+    async fn fts5_with_trigram_is_available() {
+        let db = crate::db::test_helpers::fresh_in_memory_db().await;
+        exec(
+            &db,
+            "CREATE VIRTUAL TABLE probe USING fts5(body, tokenize='trigram');",
+        )
+        .await;
+        exec(
+            &db,
+            "INSERT INTO probe(body) VALUES ('记忆宫殿的可视化设计'), ('user asked about terminal diff rendering');",
+        )
+        .await;
+
+        // CJK substring >= 3 chars: trigram must hit.
+        let cjk = db
+            .conn
+            .query_all(Statement::from_string(
+                DbBackend::Sqlite,
+                "SELECT snippet(probe, 0, '[', ']', '…', 8) FROM probe WHERE probe MATCH '忆宫殿';"
+                    .to_owned(),
+            ))
+            .await
+            .expect("cjk match");
+        assert_eq!(cjk.len(), 1, "trigram must match a 3-char CJK substring");
+
+        // English word: must hit.
+        let en = db
+            .conn
+            .query_all(Statement::from_string(
+                DbBackend::Sqlite,
+                "SELECT body FROM probe WHERE probe MATCH 'terminal';".to_owned(),
+            ))
+            .await
+            .expect("en match");
+        assert_eq!(en.len(), 1, "trigram must match an English word");
+
+        // The 2-char floor: documented behaviour, not a bug — the query layer
+        // falls back to LIKE for short queries.
+        let short = db
+            .conn
+            .query_all(Statement::from_string(
+                DbBackend::Sqlite,
+                "SELECT body FROM probe WHERE probe MATCH '忆宫';".to_owned(),
+            ))
+            .await
+            .expect("short match runs");
+        assert_eq!(
+            short.len(),
+            0,
+            "trigram floor: queries under 3 chars return nothing (LIKE fallback needed)"
+        );
+
+        // LIKE fallback works on the same table for the short query.
+        let like = db
+            .conn
+            .query_all(Statement::from_string(
+                DbBackend::Sqlite,
+                "SELECT body FROM probe WHERE body LIKE '%忆宫%';".to_owned(),
+            ))
+            .await
+            .expect("like fallback");
+        assert_eq!(like.len(), 1, "LIKE fallback must serve short queries");
+    }
+}

@@ -2089,7 +2089,8 @@
       "typeToSearch": "Escribe para buscar conversaciones",
       "typeToSearchFiles": "Escribe para buscar archivos o directorios",
       "noResults": "No se encontraron resultados.",
-      "untitledConversation": "Conversación sin título"
+      "untitledConversation": "Conversación sin título",
+      "contentMatches": "En mensajes"
     },
     "folderTitleBar": {
       "showSidebar": "Mostrar barra lateral",
@@ -2211,6 +2212,12 @@
   "title": "Servidores MCP",
   "count": "{count, plural, one {# servidor} other {# servidores}}",
   "configured": "configurado",
+  "edit": "Editar",
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "saving": "Guardando…",
+  "invalidJson": "JSON no válido",
+  "saveFailed": "Error al guardar",
   "empty": "Este agente no tiene servidores MCP",
   "loading": "Analizando…"
 },

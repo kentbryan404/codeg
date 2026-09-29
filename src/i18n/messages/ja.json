@@ -2089,7 +2089,8 @@
       "typeToSearch": "入力して会話を検索",
       "typeToSearchFiles": "入力してファイルまたはディレクトリを検索",
       "noResults": "結果が見つかりません。",
-      "untitledConversation": "無題の会話"
+      "untitledConversation": "無題の会話",
+      "contentMatches": "メッセージ内"
     },
     "folderTitleBar": {
       "showSidebar": "サイドバーを表示",
@@ -2211,6 +2212,12 @@
   "title": "MCP サーバー",
   "count": "{count, plural, other {# 件}}",
   "configured": "設定済み",
+  "edit": "編集",
+  "save": "保存",
+  "cancel": "キャンセル",
+  "saving": "保存中…",
+  "invalidJson": "無効な JSON",
+  "saveFailed": "保存に失敗しました",
   "empty": "この agent に MCP サーバーは未設定です",
   "loading": "スキャン中…"
 },

@@ -20,6 +20,7 @@ import {
   FileText,
   ListChevronsDownUp,
   ListChevronsUpDown,
+  Pencil,
   Plug,
   type LucideIcon,
 } from "lucide-react"
@@ -27,6 +28,7 @@ import { useTranslations } from "next-intl"
 import {
   listDirectoryWithFiles,
   mcpScanLocal,
+  mcpUpsertLocalServer,
   readFilePreview,
 } from "@/lib/api"
 import type {
@@ -53,6 +55,7 @@ import {
   ReasoningTrigger,
   useReasoning,
 } from "@/components/ai-elements/reasoning"
+import { JsonTreeView } from "@/components/ai-elements/json-tree"
 import { Shimmer } from "@/components/ai-elements/shimmer"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -732,19 +735,24 @@ function FoldHeader({
   open,
   onToggle,
   trailing,
+  className,
 }: {
   icon: LucideIcon
   title: string
   open: boolean
   onToggle: () => void
   trailing?: ReactNode
+  className?: string
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-expanded={open}
-      className="flex h-8 w-full shrink-0 items-center gap-1.5 border-t px-3 text-left transition-colors hover:bg-muted/40"
+      className={cn(
+        "flex h-8 w-full shrink-0 items-center gap-1.5 border-t px-3 text-left transition-colors hover:bg-muted/40",
+        className
+      )}
     >
       <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       <span className="shrink-0 text-xs font-medium">{title}</span>
@@ -759,6 +767,17 @@ function FoldHeader({
     </button>
   )
 }
+
+/**
+ * The tab's macOS-26-style glass surface: translucent card material with
+ * continuous corners and a hairline top highlight standing in for the glass
+ * edge. Shared by every panel and card in the tab so the material stays ONE
+ * thing. If live blur ever costs frames mid-scroll (dozens of episode cards),
+ * drop `backdrop-blur` here and keep the translucency — the highlight and
+ * corner language carry the look on their own.
+ */
+const GLASS_CARD =
+  "overflow-hidden rounded-2xl border border-border/60 bg-card/55 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] backdrop-blur supports-[backdrop-filter]:bg-card/45"
 
 /**
  * Directories holding an agent's own DEFINITION files (`*.md`), best effort per
@@ -846,69 +865,81 @@ function RulesDiscipline({
   if (projectRules) entries.push({ kind: "project", file: projectRules })
   if (extra.system) entries.push({ kind: "system", file: extra.system })
   return (
-    <div className="shrink-0">
-      <FoldHeader
-        icon={FileText}
-        title={t("title")}
-        open={open}
-        onToggle={() => setOpen((prev) => !prev)}
-        trailing={
-          <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
-            {entries.length > 0 ? entries.length : null}
-          </span>
-        }
-      />
-      {!open ? null : entries.length === 0 ? (
-        <div className="px-3 pb-1 text-[0.625rem] text-muted-foreground/60">
-          {t("none")}
-        </div>
-      ) : null}
-      {open &&
-        entries.map((entry) => (
-          <button
-            key={entry.kind}
-            type="button"
-            title={entry.file.path}
-            onClick={() =>
-              void openFilePreview(entry.file.path, { folderId: folder?.id })
-            }
-            className="flex w-full items-center gap-1.5 border-b border-border/50 px-2 py-[0.1875rem] text-left transition-colors last:border-b-0 hover:bg-muted"
-          >
-            <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-            <span className="truncate font-mono text-[0.71875rem] text-foreground/80">
-              {entry.file.name}
+    <div className="shrink-0 px-2 pt-2 pb-1.5">
+      {/* macOS-26-style glass card — see GLASS_CARD. Rows sit on rounded hover
+          pills (list rows, not divider rows). */}
+      <div className={GLASS_CARD}>
+        <FoldHeader
+          icon={FileText}
+          title={t("title")}
+          open={open}
+          onToggle={() => setOpen((prev) => !prev)}
+          className="border-t-0"
+          trailing={
+            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+              {entries.length > 0 ? entries.length : null}
             </span>
-            <span className="ml-auto shrink-0 text-[0.625rem] text-muted-foreground/70">
-              {t(entry.kind)}
-            </span>
-          </button>
-        ))}
-      {open && agentDocs.length > 0 ? (
-        <>
-          <div className="border-t border-border/50 px-2 pt-1 text-[0.625rem] text-muted-foreground/60">
-            {t("agents")}
+          }
+        />
+        {!open ? null : entries.length === 0 ? (
+          <div className="px-3 pb-2 text-[0.625rem] text-muted-foreground/60">
+            {t("none")}
           </div>
-          {agentDocs.map((doc) => (
-            <button
-              key={`agent-doc-${doc.path}`}
-              type="button"
-              title={doc.path}
-              onClick={() =>
-                void openFilePreview(doc.path, { folderId: folder?.id })
-              }
-              className="flex w-full items-center gap-1.5 px-2 py-[0.1875rem] text-left transition-colors hover:bg-muted"
-            >
-              <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-              <span className="truncate font-mono text-[0.71875rem] text-foreground/80">
-                {doc.name}
-              </span>
-              <span className="ml-auto shrink-0 text-[0.625rem] text-muted-foreground/70">
-                {t("definition")}
-              </span>
-            </button>
-          ))}
-        </>
-      ) : null}
+        ) : null}
+        {open && entries.length > 0 ? (
+          <div className="p-1 pt-0">
+            {entries.map((entry) => (
+              <button
+                key={entry.kind}
+                type="button"
+                title={entry.file.path}
+                onClick={() =>
+                  void openFilePreview(entry.file.path, {
+                    folderId: folder?.id,
+                  })
+                }
+                className="group flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60"
+              >
+                <FileText className="h-3 w-3 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground/70" />
+                <span className="truncate font-mono text-[0.71875rem] text-foreground/80">
+                  {entry.file.name}
+                </span>
+                <span className="ml-auto shrink-0 rounded-md bg-muted/70 px-1.5 py-px text-[0.5625rem] text-muted-foreground/80">
+                  {t(entry.kind)}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {open && agentDocs.length > 0 ? (
+          <>
+            <div className="px-3 pb-0.5 pt-1 text-[0.625rem] text-muted-foreground/50">
+              {t("agents")}
+            </div>
+            <div className="p-1 pt-0">
+              {agentDocs.map((doc) => (
+                <button
+                  key={`agent-doc-${doc.path}`}
+                  type="button"
+                  title={doc.path}
+                  onClick={() =>
+                    void openFilePreview(doc.path, { folderId: folder?.id })
+                  }
+                  className="group flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60"
+                >
+                  <FileText className="h-3 w-3 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground/70" />
+                  <span className="truncate font-mono text-[0.71875rem] text-foreground/80">
+                    {doc.name}
+                  </span>
+                  <span className="ml-auto shrink-0 rounded-md bg-muted/70 px-1.5 py-px text-[0.5625rem] text-muted-foreground/80">
+                    {t("definition")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -970,57 +1001,60 @@ function MemoryPanel({ timeline }: { timeline: ConversationTimelineTurn[] }) {
   const entries = useMemo(() => collectMemoryEntries(timeline), [timeline])
 
   return (
-    <div className="shrink-0">
-      <FoldHeader
-        icon={Database}
-        title={t("title")}
-        open={open}
-        onToggle={() => setOpen((prev) => !prev)}
-        trailing={
-          <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
-            {t("count", { count: entries.length })}
-          </span>
-        }
-      />
-      {open &&
-        (entries.length === 0 ? (
-          <div className="px-3 pb-3 text-[0.6875rem] text-muted-foreground/70">
-            {t("empty")}
-          </div>
-        ) : (
-          <ScrollArea className="max-h-56">
-            <ul className="px-3 pb-2">
-              {entries.map((entry) => (
-                <li
-                  key={entry.key}
-                  data-memory-entry
-                  // PERF: open by default means a long session lists every
-                  // turn; `content-visibility` keeps the off-screen rows out of
-                  // layout + paint (native virtualization) with a remembered
-                  // one-line intrinsic height.
-                  className="flex items-start gap-2 border-b border-border/50 py-1 text-[0.6875rem] last:border-b-0 [content-visibility:auto] [contain-intrinsic-size:auto_1.25rem]"
-                >
-                  <span
-                    className={cn(
-                      "shrink-0 font-mono",
-                      entry.role === "user"
-                        ? "text-primary/80"
-                        : "text-muted-foreground/70"
-                    )}
+    <div className="shrink-0 px-2 pt-1.5 pb-1.5">
+      <div className={GLASS_CARD}>
+        <FoldHeader
+          icon={Database}
+          title={t("title")}
+          open={open}
+          onToggle={() => setOpen((prev) => !prev)}
+          className="border-t-0"
+          trailing={
+            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+              {t("count", { count: entries.length })}
+            </span>
+          }
+        />
+        {open &&
+          (entries.length === 0 ? (
+            <div className="px-3 pb-2.5 text-[0.6875rem] text-muted-foreground/70">
+              {t("empty")}
+            </div>
+          ) : (
+            <ScrollArea className="max-h-56">
+              <ul className="p-1 pt-0">
+                {entries.map((entry) => (
+                  <li
+                    key={entry.key}
+                    data-memory-entry
+                    // PERF: open by default means a long session lists every
+                    // turn; `content-visibility` keeps the off-screen rows out of
+                    // layout + paint (native virtualization) with a remembered
+                    // one-line intrinsic height.
+                    className="flex items-start gap-2 rounded-lg px-2 py-1 text-[0.6875rem] transition-colors hover:bg-muted/60 [content-visibility:auto] [contain-intrinsic-size:auto_1.25rem]"
                   >
-                    {entry.role}
-                  </span>
-                  <time className="shrink-0 tabular-nums text-muted-foreground/50">
-                    {formatClock(entry.at) ?? "--:--:--"}
-                  </time>
-                  <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                    {entry.preview}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </ScrollArea>
-        ))}
+                    <span
+                      className={cn(
+                        "shrink-0 font-mono",
+                        entry.role === "user"
+                          ? "text-primary/80"
+                          : "text-muted-foreground/70"
+                      )}
+                    >
+                      {entry.role}
+                    </span>
+                    <time className="shrink-0 tabular-nums text-muted-foreground/50">
+                      {formatClock(entry.at) ?? "--:--:--"}
+                    </time>
+                    <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                      {entry.preview}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          ))}
+      </div>
     </div>
   )
 }
@@ -1049,6 +1083,68 @@ function McpPanel({ agentType }: { agentType: AgentType | null }) {
   const t = useTranslations("Folder.auxPanel.thinking.mcp")
   const [open, setOpen] = useState(false)
   const [servers, setServers] = useState<LocalMcpServer[] | null>(null)
+  // Which server's full spec is open. One at a time — the panel is narrow and
+  // the spec tree is tall; allowing several would just stack tall rows.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  // Spec editing: the server whose textarea is open, its draft text, and the
+  // save feedback. Saving goes through `mcp_upsert_local_server` — the write
+  // lands in the agents' config files, so it takes effect for NEW sessions
+  // (a running agent reads MCP config at launch).
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draft, setDraft] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  const startEdit = useCallback(
+    (server: LocalMcpServer) => {
+      setEditingId(server.id)
+      setDraft(JSON.stringify(server.spec, null, 2))
+      setSaveError(null)
+    },
+    []
+  )
+
+  const cancelEdit = useCallback(() => {
+    setEditingId(null)
+    setSaveError(null)
+  }, [])
+
+  const saveSpec = useCallback(
+    async (server: LocalMcpServer) => {
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(draft)
+      } catch {
+        setSaveError(t("invalidJson"))
+        return
+      }
+      if (typeof parsed !== "object" || parsed == null || Array.isArray(parsed)) {
+        setSaveError(t("invalidJson"))
+        return
+      }
+      setSaving(true)
+      setSaveError(null)
+      try {
+        // `apps: server.apps` keeps the assignment untouched — the write
+        // means "these agents and no others", so passing the scanned value
+        // is exactly "same distribution, new spec".
+        const updated = await mcpUpsertLocalServer({
+          serverId: server.id,
+          spec: parsed as Record<string, unknown>,
+          apps: server.apps,
+        })
+        setServers((prev) =>
+          (prev ?? []).map((s) => (s.id === server.id ? updated : s))
+        )
+        setEditingId(null)
+      } catch (err) {
+        setSaveError(err instanceof Error ? err.message : t("saveFailed"))
+      } finally {
+        setSaving(false)
+      }
+    },
+    [draft, t]
+  )
 
   // Fetched on first expand only — the scan reads the agents' config files.
   useEffect(() => {
@@ -1083,49 +1179,135 @@ function McpPanel({ agentType }: { agentType: AgentType | null }) {
   }
 
   return (
-    <div className="shrink-0">
-      <FoldHeader
-        icon={Plug}
-        title={t("title")}
-        open={open}
-        onToggle={() => setOpen((prev) => !prev)}
-        trailing={
-          servers == null ? null : (
-            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
-              {t("count", { count: mine.length })}
-            </span>
-          )
-        }
-      />
-      {open &&
-        (servers == null ? (
-          <div className="px-3 pb-1 text-[0.625rem] text-muted-foreground/60">
-            {t("loading")}
-          </div>
-        ) : mine.length === 0 ? (
-          <div className="px-3 pb-1 text-[0.625rem] text-muted-foreground/60">
-            {t("empty")}
-          </div>
-        ) : (
-          <ul className="pb-1">
-            {mine.map((server) => (
-              <li
-                key={server.id}
-                className="flex items-center gap-2 px-3 py-[0.1875rem] text-[0.6875rem]"
-              >
-                <span className="shrink-0 font-mono text-foreground/80">
-                  {server.id}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground/60">
-                  {summary(server)}
-                </span>
-                <span className="shrink-0 text-[0.625rem] text-muted-foreground/70">
-                  {t("configured")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ))}
+    <div className="shrink-0 px-2 pt-1.5 pb-2">
+      <div className={GLASS_CARD}>
+        <FoldHeader
+          icon={Plug}
+          title={t("title")}
+          open={open}
+          onToggle={() => setOpen((prev) => !prev)}
+          className="border-t-0"
+          trailing={
+            servers == null ? null : (
+              <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+                {t("count", { count: mine.length })}
+              </span>
+            )
+          }
+        />
+        {open &&
+          (servers == null ? (
+            <div className="px-3 pb-1.5 text-[0.625rem] text-muted-foreground/60">
+              {t("loading")}
+            </div>
+          ) : mine.length === 0 ? (
+            <div className="px-3 pb-1.5 text-[0.625rem] text-muted-foreground/60">
+              {t("empty")}
+            </div>
+          ) : (
+            <ul className="p-1 pt-0">
+              {mine.map((server) => {
+                const expanded = expandedId === server.id
+                return (
+                  <li key={server.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExpandedId((prev) =>
+                          prev === server.id ? null : server.id
+                        )
+                        cancelEdit()
+                      }}
+                      aria-expanded={expanded}
+                      className="flex w-full items-center gap-1.5 rounded-lg px-1.5 py-1 text-left text-[0.6875rem] transition-colors hover:bg-muted/60"
+                    >
+                      <ChevronRight
+                        aria-hidden
+                        className={cn(
+                          "h-3 w-3 shrink-0 text-muted-foreground/50 transition-transform",
+                          expanded && "rotate-90"
+                        )}
+                      />
+                      <span className="shrink-0 font-mono text-foreground/80">
+                        {server.id}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-muted-foreground/60">
+                        {summary(server)}
+                      </span>
+                      <span className="shrink-0 rounded-md bg-muted/70 px-1.5 py-px text-[0.5625rem] text-muted-foreground/80">
+                        {t("configured")}
+                      </span>
+                    </button>
+                    {expanded && (
+                      <div className="px-1 pb-1 pt-0.5">
+                        {editingId === server.id ? (
+                          <div className="space-y-1">
+                            <textarea
+                              value={draft}
+                              onChange={(e) => {
+                                setDraft(e.target.value)
+                                setSaveError(null)
+                              }}
+                              spellCheck={false}
+                              aria-label={t("edit")}
+                              className="max-h-64 min-h-24 w-full resize-y rounded-lg border border-border/50 bg-background/40 p-2 font-mono text-[0.625rem] leading-relaxed outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            />
+                            {saveError ? (
+                              <div className="text-[0.625rem] text-destructive">
+                                {saveError}
+                              </div>
+                            ) : null}
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={cancelEdit}
+                                className="h-6 rounded-md px-2 text-[0.6875rem] text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                              >
+                                {t("cancel")}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => void saveSpec(server)}
+                                className="h-6 rounded-md bg-primary px-2 text-[0.6875rem] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                              >
+                                {saving ? t("saving") : t("save")}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="relative">
+                            {/* The full spec, as the config file holds it —
+                                the same value the Settings → MCP editor
+                                shows. Edit writes back through
+                                `mcp_upsert_local_server` (keeping the app
+                                assignment): the change lands in the agents'
+                                config files and takes effect for NEW
+                                sessions — a running agent read its MCP
+                                config at launch. */}
+                            <button
+                              type="button"
+                              onClick={() => startEdit(server)}
+                              title={t("edit")}
+                              aria-label={t("edit")}
+                              className="absolute right-8 top-1 z-10 rounded-md p-1 text-muted-foreground opacity-60 transition-opacity hover:bg-muted hover:opacity-100"
+                            >
+                              <Pencil className="size-3.5" />
+                            </button>
+                            <JsonTreeView
+                              value={server.spec}
+                              className="rounded-lg border border-border/50 bg-background/40"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          ))}
+      </div>
     </div>
   )
 }
@@ -1289,80 +1471,82 @@ export function ThinkingTab() {
       {/* Stream header: what the stream is doing right now, where it is, and the
           fold for the WHOLE thinking area (like the memory panel below).
           Kept pinned so the live state is visible even after scrolling away. */}
-      <div className="flex h-8 shrink-0 items-center border-t pr-1">
-        <button
-          type="button"
-          onClick={() => setThinkingOpen((prev) => !prev)}
-          aria-expanded={thinkingOpen}
-          className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-3 text-left transition-colors hover:bg-muted/40"
-        >
-          <Brain className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="shrink-0 text-xs font-medium">{t("title")}</span>
-          {/* Same shape as the memory panel: title, then the count. While the
-              agent is streaming, the COUNT carries the shimmer — the live
-              state shows on the number instead of replacing the row with a
-              differently-worded status. */}
-          {segments.length === 0 ? (
-            <span className="truncate text-[0.6875rem] text-muted-foreground/70">
-              {t("empty")}
-            </span>
-          ) : isStreaming ? (
-            <Shimmer
-              duration={1}
-              shineColor="var(--primary)"
-              className="shrink-0 text-[0.6875rem]"
-            >
-              {t("count", { count: segments.length })}
-            </Shimmer>
-          ) : (
-            <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
-              {t("count", { count: segments.length })}
-            </span>
-          )}
-        </button>
-        {segments.length > 0 && (
+      <div className="shrink-0 px-2 pt-1.5">
+        <div className={cn(GLASS_CARD, "flex h-8 items-center pr-1")}>
           <button
             type="button"
-            onClick={toggleAllExpanded}
-            title={allExpanded ? t("collapseAll") : t("expandAll")}
-            aria-label={allExpanded ? t("collapseAll") : t("expandAll")}
+            onClick={() => setThinkingOpen((prev) => !prev)}
+            aria-expanded={thinkingOpen}
+            className="flex h-full min-w-0 flex-1 items-center gap-1.5 px-3 text-left transition-colors hover:bg-muted/40"
+          >
+            <Brain className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="shrink-0 text-xs font-medium">{t("title")}</span>
+            {/* Same shape as the memory panel: title, then the count. While the
+                agent is streaming, the COUNT carries the shimmer — the live
+                state shows on the number instead of replacing the row with a
+                differently-worded status. */}
+            {segments.length === 0 ? (
+              <span className="truncate text-[0.6875rem] text-muted-foreground/70">
+                {t("empty")}
+              </span>
+            ) : isStreaming ? (
+              <Shimmer
+                duration={1}
+                shineColor="var(--primary)"
+                className="shrink-0 text-[0.6875rem]"
+              >
+                {t("count", { count: segments.length })}
+              </Shimmer>
+            ) : (
+              <span className="shrink-0 text-[0.6875rem] text-muted-foreground/70">
+                {t("count", { count: segments.length })}
+              </span>
+            )}
+          </button>
+          {segments.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleAllExpanded}
+              title={allExpanded ? t("collapseAll") : t("expandAll")}
+              aria-label={allExpanded ? t("collapseAll") : t("expandAll")}
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {allExpanded ? (
+                <ListChevronsDownUp className="h-3.5 w-3.5" />
+              ) : (
+                <ListChevronsUpDown className="h-3.5 w-3.5" />
+              )}
+            </button>
+          )}
+          {detached && (
+            <button
+              type="button"
+              onClick={jumpToLatest}
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-full border bg-background px-2 py-0.5",
+                "text-[0.6875rem] text-muted-foreground transition-colors",
+                "hover:text-foreground"
+              )}
+            >
+              <ChevronsDown className="h-3 w-3" />
+              {t("jumpToLatest")}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setThinkingOpen((prev) => !prev)}
+            aria-expanded={thinkingOpen}
             className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
           >
-            {allExpanded ? (
-              <ListChevronsDownUp className="h-3.5 w-3.5" />
-            ) : (
-              <ListChevronsUpDown className="h-3.5 w-3.5" />
-            )}
+            <ChevronDown
+              aria-hidden
+              className={cn(
+                "h-3.5 w-3.5 transition-transform",
+                thinkingOpen && "rotate-180"
+              )}
+            />
           </button>
-        )}
-        {detached && (
-          <button
-            type="button"
-            onClick={jumpToLatest}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-full border bg-background px-2 py-0.5",
-              "text-[0.6875rem] text-muted-foreground transition-colors",
-              "hover:text-foreground"
-            )}
-          >
-            <ChevronsDown className="h-3 w-3" />
-            {t("jumpToLatest")}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setThinkingOpen((prev) => !prev)}
-          aria-expanded={thinkingOpen}
-          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ChevronDown
-            aria-hidden
-            className={cn(
-              "h-3.5 w-3.5 transition-transform",
-              thinkingOpen && "rotate-180"
-            )}
-          />
-        </button>
+        </div>
       </div>
 
       {thinkingOpen &&
@@ -1372,7 +1556,7 @@ export function ThinkingTab() {
           </div>
         ) : (
           <ScrollArea
-            className="min-h-0 flex-1"
+            className="min-h-0 flex-1 px-2"
             onScroll={handleScroll}
             onViewportRef={handleViewportRef}
           >
@@ -1400,8 +1584,8 @@ export function ThinkingTab() {
                         segment.live ? "bg-primary" : "bg-muted-foreground/40"
                       )}
                     />
-                    {/* Episode card, same shape as the Releases timeline's. */}
-                    <div className="rounded-2xl border border-border/70 bg-muted/40 px-2 py-1.5">
+                    {/* Episode card: the same glass surface as the panels. */}
+                    <div className={cn(GLASS_CARD, "px-2 py-1.5")}>
                       <ThinkingEpisode
                         text={segment.text}
                         live={segment.live}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { enUS, zhCN, zhTW } from "date-fns/locale"
-import { File, Folder } from "lucide-react"
+import { File, Folder, MessageSquareText } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useAuxPanelContext } from "@/contexts/aux-panel-context"
 import { useActiveFolder } from "@/contexts/active-folder-context"
@@ -11,7 +11,12 @@ import { useAppWorkspaceStore } from "@/stores/app-workspace-store"
 import { useTabActions } from "@/contexts/tab-context"
 import { useWorkbenchRoute } from "@/contexts/workbench-route-context"
 import { useWorkspaceActions } from "@/contexts/workspace-context"
-import { listAllConversations } from "@/lib/api"
+import {
+  conversationSearchIndex,
+  conversationSearchQuery,
+  listAllConversations,
+  type ConversationSearchHit,
+} from "@/lib/api"
 import type {
   AgentType,
   ConversationStatus,
@@ -35,6 +40,44 @@ import { cn } from "@/lib/utils"
 import { formatConversationTitle } from "@/lib/conversation-title"
 
 type SearchTab = "conversations" | "files"
+
+/**
+ * Render an FTS5 snippet with its `‹…›` match markers as inline highlights.
+ * Only PAIRED markers highlight — a raw `‹` in the message body must stay
+ * literal text.
+ */
+function SnippetText({ snippet }: { snippet: string }) {
+  const parts: Array<{ text: string; hit: boolean }> = []
+  const re = /‹([^›]*)›/g
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(snippet)) !== null) {
+    if (m.index > last) {
+      parts.push({ text: snippet.slice(last, m.index), hit: false })
+    }
+    parts.push({ text: m[1], hit: true })
+    last = m.index + m[0].length
+  }
+  if (last < snippet.length) {
+    parts.push({ text: snippet.slice(last), hit: false })
+  }
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.hit ? (
+          <mark
+            key={i}
+            className="rounded-[3px] bg-primary/15 px-0.5 text-foreground"
+          >
+            {part.text}
+          </mark>
+        ) : (
+          <span key={i}>{part.text}</span>
+        )
+      )}
+    </>
+  )
+}
 
 interface SearchCommandDialogProps {
   open: boolean
@@ -68,10 +111,28 @@ export function SearchCommandDialog({
   const [query, setQuery] = useState("")
   const [agentFilter, setAgentFilter] = useState<AgentType | null>(null)
   const [results, setResults] = useState<DbConversationSummary[]>([])
+  // Message-content hits from the FTS index (see conversation_search_service):
+  // title search is a DB LIKE, content search is the indexed transcript.
+  const [contentHits, setContentHits] = useState<ConversationSearchHit[]>([])
   const [searching, setSearching] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const folderPath = folder?.path ?? ""
+
+  // Full-text index maintenance rides on the dialog's open: an incremental
+  // pass (message-count watermark) indexes whatever changed since last time.
+  // Fire-and-forget — search still answers from whatever is already indexed.
+  useEffect(() => {
+    if (!open || folderId <= 0) return
+    void conversationSearchIndex({ folderId }).catch(() => {
+      // Non-fatal: the dialog works against the existing index.
+    })
+  }, [open, folderId])
+
+  const conversationById = useMemo(
+    () => new Map(conversations.map((c) => [c.id, c])),
+    [conversations]
+  )
 
   // File search via shared hook (lazy-loaded when files tab is active)
   const {
@@ -95,23 +156,50 @@ export function SearchCommandDialog({
     [allFiles, query]
   )
 
+  // Content hits follow the agent chip too: the chip means "only this agent",
+  // and a message row from another agent would break that contract.
+  const visibleContentHits = useMemo(
+    () =>
+      agentFilter
+        ? contentHits.filter((h) => h.agent_type === agentFilter)
+        : contentHits,
+    [contentHits, agentFilter]
+  )
+
   const doSearch = useCallback(
     async (q: string, agent: AgentType | null) => {
-      if (!q.trim() && !agent) {
+      const trimmed = q.trim()
+      if (!trimmed && !agent) {
         setResults([])
+        setContentHits([])
         setSearching(false)
         return
       }
       setSearching(true)
       try {
-        const data = await listAllConversations({
-          folder_ids: folderId > 0 ? [folderId] : null,
-          search: q.trim() || null,
-          agent_type: agent,
-        })
+        // Two searches in flight: the existing title/DB path, and the
+        // message-content match over the FTS index (short queries are handled
+        // server-side with the LIKE fallback). A failed content search must
+        // not sink the title results, hence the per-promise catch.
+        const [data, hits] = await Promise.all([
+          listAllConversations({
+            folder_ids: folderId > 0 ? [folderId] : null,
+            search: trimmed || null,
+            agent_type: agent,
+          }),
+          trimmed
+            ? conversationSearchQuery({
+                query: trimmed,
+                folderId: folderId > 0 ? folderId : null,
+                limit: 40,
+              }).catch(() => [] as ConversationSearchHit[])
+            : Promise.resolve([] as ConversationSearchHit[]),
+        ])
         setResults(data)
+        setContentHits(hits)
       } catch {
         setResults([])
+        setContentHits([])
       } finally {
         setSearching(false)
       }
@@ -137,6 +225,7 @@ export function SearchCommandDialog({
       setQuery("")
       setAgentFilter(null)
       setResults([])
+      setContentHits([])
       setActiveTab("conversations")
       resetFileTree()
     }
@@ -149,6 +238,23 @@ export function SearchCommandDialog({
       // already-active tab, which doesn't change activeTabId.
       openConversations()
       openTab(conv.folder_id, conv.id, conv.agent_type, true)
+      onOpenChange(false)
+    },
+    [openTab, onOpenChange, openConversations]
+  )
+
+  // A content hit carries everything openTab needs (folder, conversation,
+  // agent) — no store lookup required even for a conversation the sidebar
+  // hasn't loaded a summary for.
+  const handleSelectHit = useCallback(
+    (hit: ConversationSearchHit) => {
+      openConversations()
+      openTab(
+        hit.folder_id,
+        hit.conversation_id,
+        hit.agent_type as AgentType,
+        true
+      )
       onOpenChange(false)
     },
     [openTab, onOpenChange, openConversations]
@@ -307,6 +413,41 @@ export function SearchCommandDialog({
                     </span>
                   </CommandItem>
                 ))}
+              </CommandGroup>
+            )}
+            {visibleContentHits.length > 0 && (
+              <CommandGroup heading={t("contentMatches")}>
+                {visibleContentHits.map((hit) => {
+                  const conv = conversationById.get(hit.conversation_id)
+                  return (
+                    <CommandItem
+                      key={`msg-${hit.conversation_id}-${hit.at}-${hit.role}`}
+                      // The value carries the query verbatim so cmdk's built-in
+                      // filter (on for this tab) keeps the row — the server
+                      // already decided the match.
+                      value={`message-hit ${query} ${hit.conversation_id} ${hit.at}`}
+                      onSelect={() => handleSelectHit(hit)}
+                    >
+                      <MessageSquareText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-xs font-medium">
+                            {conv
+                              ? formatConversationTitle(conv.title) ||
+                                t("untitledConversation")
+                              : `#${hit.conversation_id}`}
+                          </span>
+                          <span className="shrink-0 text-[0.6875rem] text-muted-foreground">
+                            {getAgentLabel(hit.agent_type as AgentType)}
+                          </span>
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          <SnippetText snippet={hit.snippet} />
+                        </div>
+                      </div>
+                    </CommandItem>
+                  )
+                })}
               </CommandGroup>
             )}
           </>

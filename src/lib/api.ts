@@ -3330,6 +3330,49 @@ export async function quickMessagesReorder(ids: number[]): Promise<void> {
   return getTransport().call("quick_messages_reorder", { ids })
 }
 
+// Cross-conversation search (FTS5 index over parsed session transcripts)
+
+export interface ConversationSearchHit {
+  conversation_id: number
+  folder_id: number
+  agent_type: string
+  role: string
+  at: string
+  snippet: string
+}
+
+export interface ConversationSearchIndexReport {
+  conversations_seen: number
+  conversations_indexed: number
+  conversations_skipped: number
+  turns_written: number
+  parse_failures: number
+}
+
+/** Search indexed conversation turns; queries under 3 chars go through the
+ *  LIKE fallback server-side. */
+export async function conversationSearchQuery(params: {
+  query: string
+  folderId?: number | null
+  limit?: number
+}): Promise<ConversationSearchHit[]> {
+  return getTransport().call("conversation_search_query", {
+    query: params.query,
+    folderId: params.folderId ?? null,
+    limit: params.limit ?? null,
+  })
+}
+
+/** Index (or refresh) conversations into the search index. Incremental by
+ *  message-count watermark; safe to call repeatedly. */
+export async function conversationSearchIndex(params?: {
+  folderId?: number | null
+}): Promise<ConversationSearchIndexReport> {
+  return getTransport().call("conversation_search_index", {
+    folderId: params?.folderId ?? null,
+  })
+}
+
 // Token usage dashboard
 
 export async function tokenUsageReport(

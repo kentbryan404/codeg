@@ -2089,7 +2089,8 @@
       "typeToSearch": "Tippen, um Konversationen zu suchen",
       "typeToSearchFiles": "Tippen, um Dateien oder Verzeichnisse zu suchen",
       "noResults": "Keine Ergebnisse gefunden.",
-      "untitledConversation": "Unbenannte Konversation"
+      "untitledConversation": "Unbenannte Konversation",
+      "contentMatches": "In Nachrichten"
     },
     "folderTitleBar": {
       "showSidebar": "Seitenleiste anzeigen",
@@ -2211,6 +2212,12 @@
   "title": "MCP-Server",
   "count": "{count, plural, one {# Server} other {# Server}}",
   "configured": "konfiguriert",
+  "edit": "Bearbeiten",
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "saving": "Wird gespeichert…",
+  "invalidJson": "Ungültiges JSON",
+  "saveFailed": "Speichern fehlgeschlagen",
   "empty": "Kein MCP-Server für diesen Agenten",
   "loading": "Scanne…"
 },

@@ -16,6 +16,7 @@ pub mod chat_channel;
 pub mod clipboard;
 pub mod config_sync;
 pub mod conversations;
+pub mod conversation_search;
 pub mod custom_agents;
 pub mod custom_skills;
 pub mod deepseek_settings;

@@ -2089,7 +2089,8 @@
       "typeToSearch": "입력하여 대화를 검색하세요",
       "typeToSearchFiles": "입력하여 파일 또는 디렉토리를 검색하세요",
       "noResults": "검색 결과가 없습니다.",
-      "untitledConversation": "제목 없는 대화"
+      "untitledConversation": "제목 없는 대화",
+      "contentMatches": "메시지 내용"
     },
     "folderTitleBar": {
       "showSidebar": "사이드바 표시",
@@ -2211,6 +2212,12 @@
   "title": "MCP 서버",
   "count": "{count, plural, other {#개}}",
   "configured": "설정됨",
+  "edit": "편집",
+  "save": "저장",
+  "cancel": "취소",
+  "saving": "저장 중…",
+  "invalidJson": "잘못된 JSON",
+  "saveFailed": "저장 실패",
   "empty": "이 agent 에 구성된 MCP 서버가 없습니다",
   "loading": "스캔 중…"
 },

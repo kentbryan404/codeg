@@ -1393,6 +1393,15 @@ pub fn build_router(
             "/quick_messages_reorder",
             post(handlers::quick_messages::quick_messages_reorder),
         )
+        // ─── Conversation Search ───
+        .route(
+            "/conversation_search_query",
+            post(handlers::conversation_search::conversation_search_query),
+        )
+        .route(
+            "/conversation_search_index",
+            post(handlers::conversation_search::conversation_search_index),
+        )
         // ─── Automations ───
         .route(
             "/automation_list",
